@@ -1,0 +1,14 @@
+{
+  "python.terminal.activateEnvironment": true,
+  "terminal.integrated.profiles.windows": {
+    "PowerShell (AetherMind)": {
+      "source": "PowerShell",
+      "args": [
+        "-NoExit",
+        "-Command",
+        "conda activate aethermind"
+      ]
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "PowerShell (AetherMind)"
+}

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Jayden Tran/.claude/**)",
+      "WebFetch(domain:docs.claude.com)"
+    ]
+  }
+}

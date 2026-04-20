@@ -1,0 +1,5 @@
+{
+  "name": "aethermind-frontend",
+  "private": true,
+  "description": "Scaffold Next.js 15 App Router + Tailwind + shadcn/ui when starting frontend bootstrap (plan §2, §10)."
+}

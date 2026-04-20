@@ -1,0 +1,60 @@
+---
+description: AetherMind architecture from the research-agent plan — stack, build phases, router, guardrails, API/UI
+alwaysApply: true
+---
+
+# AetherMind (plan-aligned)
+
+**Source of truth:** `.cursor/plans/aethermind_research_agent_plan_2dc943b3.plan.md` — read it before starting or extending a phase.
+
+## Stack
+
+- **Monorepo:** `backend/` (Python 3.12, uv, FastAPI, SQLAlchemy + Alembic, pytest), `frontend/` (Next.js 15 App Router, Tailwind, shadcn/ui).
+- **Infra:** `docker-compose` — API, frontend, Chroma, optional self-hosted Langfuse.
+
+## Phased build order (do not skip ahead)
+
+1. bootstrap → 2. `llm_gateway` + `vram_router` + `embeddings_module` → 3. `schemas` + `db_layer` → 4. `tool_stubs` → 5. `langgraph_core` + `parallel_research` + `critic_loop` → 6. `guardrails` + `memory_service` → 7. `fastapi_endpoints` → 8. `frontend_*` → 9. `eval_harness` → 10. `observability` + `tests` (stretch last).
+
+## Agent (LangGraph)
+
+- **Loop:** plan → parallel research (tools per sub-question) → synthesize → critic (rubric) → revise up to N → finalize → `memory_writer`.
+- **Assembly:** `backend/app/agent/graph.py`, state in `state.py`, prompts in `agent/prompts/`. **Checkpointer:** `SqliteSaver` (resume, time-travel, HITL).
+- **Researcher:** fan-out (Send / map); **within** each researcher, parallel tools via `asyncio.gather`.
+
+## LLM routing (non-negotiable)
+
+- **LiteLLM** in `backend/app/llm/client.py`; **task-tagged routing** in `backend/app/llm/router.py` — e.g. `planner`, `synthesize`, `critic_inner`, `critic_final`, `pref_extract`, `source_summary`, `entailment`, `tool_format`, `eval_judge`. Do not scatter provider/model calls outside client + router + env.
+- **Local ceiling:** `LOCALVRAM_MAX_GB=8` — only small local models (Ollama 3B–7B Q4, `bge-small` / MiniLM / `nomic-embed-text`, `bge-reranker-base`, small cross-encoder/NLI). Heavier workloads → small API (e.g. `gpt-4o-mini`, Haiku) or skip. Use `FORCE_API_FOR_HEAVY` in CI / no-GPU dev.
+- **Embeddings:** only via `backend/app/embeddings/` — high volume; optional hosted override; never load >8GB local.
+
+## Tools
+
+- **Contract:** `BaseTool` + JSON schema for function calling; return `ToolResult { content, source }` with registry-backed source IDs.
+- **Set:** `web_search` (Tavily, Brave fallback), `arxiv_search`, `pdf_loader` (pymupdf only; optional MinHash dedup before embed), `fetch_url` (httpx + readability), `code_exec` (E2B; local subprocess opt-in only).
+
+## Memory & data
+
+- **SQLite:** users, preferences, research_jobs, reports, claims, citations, feedback, agent_traces.
+- **Chroma:** `memory_preferences`, `memory_reports` (persistent); `scratch_sources` (per-job dedup). Planner calls `memory.recall`; `memory_writer` persists structured + semantic updates. Pref extraction / summary-for-embed goes through the **router**.
+
+## Guardrails & eval
+
+- **Citations:** synthesizer cites **only** registered source IDs; Pydantic rejects unknown IDs. **Verifier:** local small NLI if VRAM allows, else mini API + overlap heuristic; flag failures to critic. **Source policy:** allow/deny domains before synthesis. No evidence → state insufficient evidence, do not fabricate.
+- **Critic rubric:** accuracy, completeness, citation integrity, bias, structure (pluggable scores).
+- **Offline eval:** `backend/app/eval/` — LLM-as-judge + Ragas-style metrics; default cheap judge via router; trace to Langfuse when enabled.
+
+## API & UI
+
+- **FastAPI:** `POST /research`, `GET /research/{id}/stream` (SSE), `GET /reports/{id}`, `GET /reports/{id}/versions`, `POST /feedback`, `GET/POST /memory/preferences`.
+- **Frontend:** new research (`app/page.tsx`), report viewer (`app/reports/[id]/page.tsx` — trace, Markdown + citations, version diff, feedback), memory (`app/memory/page.tsx`). Use `react-markdown` + `remark-gfm`, `diff-match-patch` where needed.
+
+## Observability
+
+- Langfuse on graph nodes + tool calls; **structlog** for app logs. Document env keys in `.env.example` (per-task `MODEL_*`, `EMBEDDINGS_*`, `OLLAMA_*`, API keys).
+
+## Invariants
+
+- Router is the single authority for which model runs where.
+- Embeddings only through the embeddings module.
+- Citation chain: tool registers source → synthesizer cites ID → guardrails verify — closed system.
