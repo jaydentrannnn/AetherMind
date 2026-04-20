@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Read(//c/Users/Jayden Tran/.claude/**)",
-      "WebFetch(domain:docs.claude.com)"
+      "WebFetch(domain:docs.claude.com)",
+      "Bash(uv sync *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(conda run *)",
+      "Skill(check-invariants)"
     ]
   }
 }

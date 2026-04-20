@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python .cursor/hooks/check_invariants.py",
+        "matcher": "Write",
+        "timeout": 15
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "python .cursor/hooks/router_change_reminder.py",
+        "matcher": "Write",
+        "timeout": 10
+      }
+    ],
+    "sessionStart": [
+      {
+        "command": "python .cursor/hooks/inject_phase_status.py",
+        "timeout": 10
+      }
+    ],
+    "stop": [
+      {
+        "command": "python .cursor/hooks/stop_reminder.py",
+        "timeout": 5
+      }
+    ]
+  }
+}

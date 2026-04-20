@@ -1,7 +1,35 @@
-# Skeleton — wire services in bootstrap (plan §2, §11).
-# Intended services: api, frontend, chroma, optional langfuse (profile).
-
 services:
+  api:
+    build:
+      context: ./backend
+    command: uv run fastapi dev app/main.py --host 0.0.0.0 --port 8000
+    env_file:
+      - .env
+    environment:
+      # Override host .env: inside Compose the API must reach the chroma service, not localhost.
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - chroma
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev          # use the lightweight dev stage, not the production runner
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app    # live source reload
+      - /app/node_modules  # keep image node_modules; don't let host (empty) override them
+    depends_on:
+      - api
+
   chroma:
     image: chromadb/chroma:latest
     ports:
@@ -9,5 +37,24 @@ services:
     volumes:
       - chroma_data:/chroma/chroma
 
+  # langfuse:
+  #   image: langfuse/langfuse:latest
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "3001:3000"
+  #   depends_on:
+  #     - langfuse-postgres
+  #
+  # langfuse-postgres:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_DB: langfuse
+  #     POSTGRES_USER: langfuse
+  #     POSTGRES_PASSWORD: langfuse
+  #   volumes:
+  #     - langfuse_postgres_data:/var/lib/postgresql/data
+
 volumes:
   chroma_data:
+  # langfuse_postgres_data:

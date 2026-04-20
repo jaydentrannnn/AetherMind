@@ -1,1 +1,19 @@
-# FastAPI entry + CORS + SSE — implement in bootstrap / fastapi_endpoints (plan §2, §9).
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import settings
+
+app = FastAPI(title="AetherMind", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/healthz")
+async def healthz() -> dict:
+    return {"status": "ok"}

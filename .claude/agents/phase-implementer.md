@@ -1,7 +1,7 @@
 ---
 name: phase-implementer
 description: Implements a single AetherMind build phase end-to-end. Given a phase ID, reads the plan, writes all code for that phase following the three hard invariants, and runs tests. Use for any phase from bootstrap through tests.
-model: opus
+model: sonnet
 permissionMode: acceptEdits
 ---
 
