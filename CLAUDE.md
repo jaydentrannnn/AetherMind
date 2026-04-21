@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AetherMind is an agentic research and report generator. Full build plan: `.cursor/plans/aethermind_research_agent_plan_2dc943b3.plan.md`. Read it before starting any phase.
 
-**Current status:** Bootstrap complete (`/healthz` endpoint, config, DB setup, stub files). All business logic is pending.
+**Current status:** Phase 2 complete — LLM gateway (`llm/client.py`, `llm/router.py`), embeddings module (`embeddings/client.py`), 28 tests passing. Next: Phase 3 (schemas + db_layer) or Phase 4 (tool_stubs).
 
 ## Environment
 
@@ -57,6 +57,10 @@ All model assignments go through `backend/app/llm/router.py` via env keys — **
 
 `FORCE_API_FOR_HEAVY=true` disables all local inference (CI / no-GPU dev). `LOCALVRAM_MAX_GB=8` is the ceiling.
 
+Two additional env keys added in Phase 2: `MODEL_SOURCE_SUMMARY`, `MODEL_TOOL_FORMAT` (router falls back gracefully when unset).
+
+**Retry policy:** Uses LiteLLM's built-in `num_retries` (not tenacity) — LiteLLM correctly skips retries on `AuthenticationError`/`BadRequestError` and keeps semantics consistent across all providers.
+
 ### Memory (hybrid)
 - **SQLite:** preferences, jobs, reports, claims, citations, feedback, agent traces
 - **Chroma collections:** `memory_preferences`, `memory_reports` (persistent); `scratch_sources` (ephemeral per-job — deduped source embeddings across researchers)
@@ -88,10 +92,19 @@ GET/POST /memory/preferences
 
 Violations are blocked by the `PreToolUse` hook before the file is written.
 
+## Docstring Policy (enforced by PostToolUse hook)
+
+After every `Edit`/`Write` on a `.py` file, `.claude/hooks/check_docstrings.py` runs automatically via AST and emits a `systemMessage` warning for:
+
+- Any `def`, `async def`, or `class` missing a docstring (single-expression stubs exempt)
+- Imports of notable libraries (`langgraph`, `chromadb`, `sqlalchemy`, `anthropic`, `openai`, etc.) with no inline or preceding comment
+
+Non-blocking — warns but does not prevent the write. Fix flagged items before moving on.
+
 ## Build Order
 
 ```
-bootstrap ✅ → llm_gateway + vram_router + embeddings_module → schemas + db_layer
+bootstrap ✅ → llm_gateway + vram_router + embeddings_module ✅ → schemas + db_layer
 → tool_stubs → langgraph_core + parallel_research + critic_loop
 → guardrails + memory_service → fastapi_endpoints → frontend_* → eval_harness → observability + tests
 ```

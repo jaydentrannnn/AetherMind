@@ -1,12 +1,27 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Resolve .env relative to the repo layout, not the process cwd. Developers run
+# ``uv run`` from ``backend/`` while ``.env`` lives at the monorepo root.
+_BACKEND_ROOT = Path(__file__).resolve().parent.parent
+_REPO_ROOT = _BACKEND_ROOT.parent
+_ENV_FILES = tuple(
+    str(p)
+    for p in (_REPO_ROOT / ".env", _BACKEND_ROOT / ".env")
+    if p.is_file()
+)
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=_ENV_FILES if _ENV_FILES else None,
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # --- API keys ---
     OPENAI_API_KEY: Optional[str] = None
@@ -36,6 +51,8 @@ class Settings(BaseSettings):
     MODEL_PREF_EXTRACT: Optional[str] = None
     MODEL_ENTAILMENT: Optional[str] = None
     MODEL_EVAL_JUDGE: Optional[str] = None
+    MODEL_SOURCE_SUMMARY: Optional[str] = None
+    MODEL_TOOL_FORMAT: Optional[str] = None
 
     # --- Embeddings ---
     EMBEDDINGS_PROVIDER: str = "sentence-transformers"

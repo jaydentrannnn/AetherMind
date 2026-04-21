@@ -20,6 +20,11 @@
             "type": "command",
             "command": "bash -c 'FILE=$(echo \"$HOOK_TOOL_INPUT\" | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get(\\\"file_path\\\",\\\"\\\") or d.get(\\\"path\\\",\\\"\\\"))\" 2>/dev/null); [[ \"$FILE\" == *\"llm/router.py\"* ]] && echo \"{\\\"systemMessage\\\": \\\"router.py was modified — run /vram-check to validate model assignments against the 8GB VRAM ceiling.\\\"}\" || exit 0'",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'echo \"$HOOK_TOOL_INPUT\" | python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/check_docstrings.py\"'",
+            "timeout": 10
           }
         ]
       }

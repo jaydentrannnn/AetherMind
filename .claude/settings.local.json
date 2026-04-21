@@ -6,7 +6,8 @@
       "Bash(uv sync *)",
       "PowerShell(Get-ChildItem *)",
       "PowerShell(conda run *)",
-      "Skill(check-invariants)"
+      "Skill(check-invariants)",
+      "Bash(python3 \".claude/hooks/check_docstrings.py\")"
     ]
   }
 }

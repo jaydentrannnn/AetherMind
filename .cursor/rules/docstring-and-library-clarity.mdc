@@ -1,0 +1,35 @@
+---
+description: Require docstrings and clarify confusing library usage
+alwaysApply: true
+---
+
+# Mandatory Docstrings And Library Clarity
+
+Add documentation where it prevents ambiguity for future readers.
+
+## Mandatory function and method docstrings
+
+- Every function and method you write must include a docstring.
+- This requirement applies even for small/private helpers.
+- Docstrings should explain purpose, inputs, outputs, and side effects when relevant.
+- Keep docstrings concise but specific enough to remove guesswork.
+
+## Confusing library usage
+
+- Add brief inline comments for non-obvious library calls, flags, or behaviors.
+- Prioritize comments where APIs are surprising, implicit, or easy to misuse.
+- Do not add obvious comments for self-explanatory code.
+
+## Examples
+
+```python
+# ❌ BAD
+def build_prompt(user, history):
+    return template.render(user=user, history=history)
+
+# ✅ GOOD
+def build_prompt(user: str, history: list[str]) -> str:
+    """Render the chat prompt using the templating engine expected by the LLM."""
+    # Jinja auto-escapes disabled in this environment; inputs are trusted upstream.
+    return template.render(user=user, history=history)
+```
