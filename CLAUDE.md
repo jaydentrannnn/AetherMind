@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 Concise guidance for working in this repository.
 
 ## Project Overview
@@ -7,12 +9,16 @@ Concise guidance for working in this repository.
 AetherMind is an agentic research/report generator.  
 Source of truth plan: `.cursor/plans/aethermind_research_agent_plan_2dc943b3.plan.md`.
 
-**Current status:** Phase 4 (`tool_stubs`) implemented.
-- `backend/app/tools/base.py` defines shared tool contracts and source registration helpers.
-- `backend/app/tools/` now has stubs for `web_search`, `arxiv_search`, `pdf_loader`, `fetch_url`, `code_exec`.
-- `ToolResult` + `SourceType` are defined in `backend/app/schemas/models.py`.
+**Current status:** Phase 6 (`guardrails + memory_service`) implemented.
+- `backend/app/agent/graph.py` — compiled `StateGraph` with `SqliteSaver` checkpointer
+- `backend/app/agent/state.py` — `AgentState` TypedDict with annotated reducers (`reduce_findings`, `reduce_sources`)
+- `backend/app/agent/nodes/` — `planner`, `researcher`, `synthesizer`, `guardrails`, `critic`, `memory_writer` nodes
+- `backend/app/agent/prompts/` — Jinja2 templates (`planner.j2`, `researcher.j2`, `synthesizer.j2`, `critic.j2`) rendered via `render.py`
+- `backend/app/memory/` — hybrid memory service (`service.py`, `sqlite_store.py`, `vector_store.py`)
+- `backend/app/guardrails/` — source policy + citation verifier modules
+- Tests include Phase 6 coverage (`test_memory_service.py`, `test_citation_verifier.py`, `test_source_policy.py`)
 
-**Next phase:** `langgraph_core`.
+**Next phase:** `fastapi_endpoints`.
 
 ## Coding Behavior
 
@@ -55,13 +61,14 @@ docker-compose up chroma    # vector store only
 ## Architecture
 
 ### Agent Loop
-`planner → researcher (fan-out via Send API) → synthesizer → critic → conditional edge → memory_writer`
+`planner → researcher (fan-out via Send API) → synthesizer → guardrails → critic → conditional edge → memory_writer`
 
-- **Graph:** `backend/app/agent/graph.py` (LangGraph `StateGraph`)
-- **State:** `AgentState` TypedDict in `backend/app/agent/state.py`
-- **Checkpointer:** `SqliteSaver` (resume/time-travel)
-- Parallel tool calls inside each researcher node via `asyncio.gather`
-- Critic loop: rubric-scored; routes back to synthesizer (or researcher on evidence gaps) up to N times
+- **Graph:** `backend/app/agent/graph.py` — `build_graph()` compiles the `StateGraph` with a `SqliteSaver` checkpointer at `AGENT_CHECKPOINT_PATH`
+- **State:** `AgentState` TypedDict in `backend/app/agent/state.py`; findings/sources use custom reducers that merge by ID and deduplicate by URL/DOI
+- **Fan-out:** `_fan_out_from_plan` issues one `Send("researcher", ...)` per `SubQuestion` in `state["plan"]`; each researcher branch runs its tools concurrently via `asyncio.gather`
+- **Critic routing:** `_route_after_critic` reads `state["next_action"]`; if `"researcher"` it re-fans-out; otherwise returns `"synthesizer"` or `"memory_writer"`; hard-stops at `AGENT_MAX_REVISIONS`
+- **Prompts:** Jinja2 templates in `backend/app/agent/prompts/*.j2`, rendered by the `PromptRenderer` singleton (`renderer`) in `render.py`
+- **Memory service:** `backend/app/memory/service.py` orchestrates SQLite + Chroma recall/write for planner and memory_writer
 
 ### LLM Routing
 All model assignments go through `backend/app/llm/router.py` via env keys — **never hardcode model strings elsewhere.** Enforces 8GB VRAM ceiling: local Ollama/sentence-transformers only for models that fit; anything larger routes to a small API model.
@@ -118,9 +125,9 @@ Fix flagged items before moving on.
 ## Build Order
 
 ```
-bootstrap ✅ → llm_gateway + vram_router + embeddings_module ✅ → schemas + db_layer
-→ tool_stubs ✅ → langgraph_core + parallel_research + critic_loop
-→ guardrails + memory_service → fastapi_endpoints → frontend_* → eval_harness → observability + tests
+bootstrap ✅ → llm_gateway + vram_router + embeddings_module ✅ → schemas + db_layer ✅
+→ tool_stubs ✅ → langgraph_core + parallel_research + critic_loop ✅
+→ guardrails + memory_service ✅ → fastapi_endpoints → frontend_* → eval_harness → observability + tests
 ```
 
 Use `/phase <id>` to implement any phase (IDs match todo ids in the plan file).

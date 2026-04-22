@@ -121,3 +121,60 @@ class ToolResult(BaseModel):
 
     content: str
     source: Source
+
+
+class PreferenceDelta(BaseModel):
+    """A structured preference update extracted from feedback text."""
+
+    key: str
+    value: str
+    rationale: str | None = None
+
+
+class PreferenceDeltaList(BaseModel):
+    """Container for LLM-extracted preference updates."""
+
+    deltas: list[PreferenceDelta] = Field(default_factory=list)
+
+
+class RecalledMemory(BaseModel):
+    """Normalized memory payload returned by the planner recall call."""
+
+    preferences: dict[str, str] = Field(default_factory=dict)
+    allow_domains: list[str] = Field(default_factory=list)
+    deny_domains: list[str] = Field(default_factory=list)
+    past_reports: list[dict[str, Any]] = Field(default_factory=list)
+    semantic_preferences: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class EntailmentVerdict(BaseModel):
+    """Model verdict for whether source evidence entails a claim."""
+
+    entails: bool
+    confidence: float = Field(ge=0.0, le=1.0)
+    rationale: str | None = None
+
+
+class UnverifiedClaim(BaseModel):
+    """Claim/citation pair that failed one or more guardrail checks."""
+
+    claim_text: str
+    source_id: str | None
+    reason: Literal["low_overlap", "llm_refuted", "unknown_source_id"]
+    rationale: str | None = None
+
+
+class PolicyViolation(BaseModel):
+    """A source URL that violates allow/deny policy constraints."""
+
+    source_id: str
+    url: str | None
+    reason: Literal["deny_match", "not_in_allow", "invalid_url"]
+
+
+class GuardrailReport(BaseModel):
+    """Aggregated output from guardrail validation over a draft report."""
+
+    unverified_claims: list[UnverifiedClaim] = Field(default_factory=list)
+    closure_violations: list[UnverifiedClaim] = Field(default_factory=list)
+    policy_violations: list[PolicyViolation] = Field(default_factory=list)

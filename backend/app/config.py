@@ -17,6 +17,8 @@ _ENV_FILES = tuple(
 
 
 class Settings(BaseSettings):
+    """Runtime settings loaded from environment variables and .env files."""
+
     model_config = SettingsConfigDict(
         env_file=_ENV_FILES if _ENV_FILES else None,
         env_file_encoding="utf-8",
@@ -64,15 +66,28 @@ class Settings(BaseSettings):
     # --- Chroma ---
     CHROMA_HOST: str = "localhost"
     CHROMA_PORT: int = 8001
+    CHROMA_PERSIST_DIR: str = "data/chroma"
+    CHROMA_COLLECTION_PREFERENCES: str = "memory_preferences"
+    CHROMA_COLLECTION_REPORTS: str = "memory_reports"
+    CHROMA_COLLECTION_SCRATCH: str = "scratch_sources"
+    MEMORY_RECALL_TOP_K: int = 5
+    DEFAULT_USER_NAME: str = "default"
+    CITATION_OVERLAP_THRESHOLD: float = 0.6
+    CITATION_ENTAILMENT_MIN_CONFIDENCE: float = 0.6
 
     # --- Tooling ---
     ENABLE_CODE_EXEC: bool = False
     CODE_EXEC_PROVIDER: str = "stub"
 
+    # --- Agent runtime ---
+    AGENT_MAX_REVISIONS: int = 2
+    AGENT_CHECKPOINT_PATH: str = "data/agent_checkpoints.db"
+
     # --- CORS ---
     CORS_ORIGINS: str = "http://localhost:3000"
 
     def cors_origins_list(self) -> list[str]:
+        """Return CORS origins as a normalized list."""
         return [o.strip() for o in self.CORS_ORIGINS.split(",")]
 
 

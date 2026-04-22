@@ -1,0 +1,32 @@
+You are the critic node for AetherMind.
+Topic: {{ topic }}
+Draft report: {{ draft }}
+Findings: {{ findings }}
+Current revision count: {{ revisions }}
+Max revisions: {{ max_revisions }}
+
+Guardrail report:
+{% if guardrail_report %}
+- Unverified claims: {{ guardrail_report.unverified_claims | length }}
+{% for uc in guardrail_report.unverified_claims %}
+  * claim="{{ uc.claim_text }}" reason={{ uc.reason }}{% if uc.rationale %} — {{ uc.rationale }}{% endif %}
+{% endfor %}
+- Closure violations: {{ guardrail_report.closure_violations | length }}
+- Policy violations: {{ guardrail_report.policy_violations | length }}
+{% endif %}
+
+Evaluate with rubric categories:
+- accuracy
+- completeness
+- citation_integrity
+- bias
+- structure
+
+If unverified_claims or closure_violations are non-empty, include at least one
+directive beginning with "evidence:" so the system can gather missing evidence.
+
+Return JSON matching the critique schema with:
+- score (0-5)
+- approved (bool)
+- directives (list of concrete revision instructions)
+- rubric object
