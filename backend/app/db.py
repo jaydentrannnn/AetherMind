@@ -7,6 +7,7 @@ from app.config import settings
 
 engine = create_engine(
     settings.DATABASE_URL,
+    # SQLite uses a single-thread check that breaks FastAPI dependency sessions.
     connect_args={"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {},
 )
 
@@ -14,10 +15,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class Base(DeclarativeBase):
-    pass
+    """Declarative base shared across all ORM entities."""
 
 
 def get_db() -> Generator[Session, None, None]:
+    """Yield a transactional SQLAlchemy session for request handlers."""
     db = SessionLocal()
     try:
         yield db

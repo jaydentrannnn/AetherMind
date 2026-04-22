@@ -8,6 +8,16 @@ AetherMind is an agentic research and report generator. Full build plan: `.curso
 
 **Current status:** Phase 2 complete — LLM gateway (`llm/client.py`, `llm/router.py`), embeddings module (`embeddings/client.py`), 28 tests passing. Next: Phase 3 (schemas + db_layer) or Phase 4 (tool_stubs).
 
+## Coding Behavior
+
+**Think before coding.** State assumptions explicitly. If multiple interpretations exist, present them — don't pick silently. If something is unclear, ask before implementing.
+
+**Simplicity first.** Write the minimum code that solves the problem. No features beyond what was asked, no abstractions for single-use code, no error handling for impossible scenarios. If you write 200 lines and it could be 50, rewrite it.
+
+**Surgical changes.** Touch only what you must. Don't improve adjacent code, comments, or formatting. Match existing style. If your changes make imports or functions unused, remove only those — don't touch pre-existing dead code.
+
+**Multi-step tasks:** state a brief plan with verifiable checks before starting (e.g. "1. Add validator → verify: test X passes").
+
 ## Environment
 
 - **Backend:** Python 3.12, managed via `uv` (never use pip directly)
@@ -47,23 +57,21 @@ docker-compose up chroma    # vector store only
 - Critic loop: rubric-scored; routes back to synthesizer (or researcher on evidence gaps) up to N times
 
 ### LLM Routing
-All model assignments go through `backend/app/llm/router.py` via env keys — **never hardcode model strings elsewhere.** The router enforces an 8GB VRAM ceiling: local Ollama/sentence-transformers only for models that fit; anything larger routes to a small API model.
+All model assignments go through `backend/app/llm/router.py` via env keys — **never hardcode model strings elsewhere.** Enforces 8GB VRAM ceiling: local Ollama/sentence-transformers only for models that fit; anything larger routes to a small API model.
 
 | Env key | Role |
 |---|---|
-| `MODEL_PLANNER`, `MODEL_SYNTH` | Frontier API (planner/synthesis — user-visible quality) |
+| `MODEL_PLANNER`, `MODEL_SYNTH` | Frontier API |
 | `MODEL_CRITIC_INNER`, `MODEL_PREF_EXTRACT` | Local 7B Q4 or mini API |
 | `MODEL_CRITIC_FINAL`, `MODEL_ENTAILMENT`, `MODEL_EVAL_JUDGE` | Mini API |
 
 `FORCE_API_FOR_HEAVY=true` disables all local inference (CI / no-GPU dev). `LOCALVRAM_MAX_GB=8` is the ceiling.
 
-Two additional env keys added in Phase 2: `MODEL_SOURCE_SUMMARY`, `MODEL_TOOL_FORMAT` (router falls back gracefully when unset).
-
-**Retry policy:** Uses LiteLLM's built-in `num_retries` (not tenacity) — LiteLLM correctly skips retries on `AuthenticationError`/`BadRequestError` and keeps semantics consistent across all providers.
+**Retry policy:** LiteLLM's built-in `num_retries` — not tenacity. Correctly skips retries on `AuthenticationError`/`BadRequestError`.
 
 ### Memory (hybrid)
 - **SQLite:** preferences, jobs, reports, claims, citations, feedback, agent traces
-- **Chroma collections:** `memory_preferences`, `memory_reports` (persistent); `scratch_sources` (ephemeral per-job — deduped source embeddings across researchers)
+- **Chroma:** `memory_preferences`, `memory_reports` (persistent); `scratch_sources` (ephemeral per-job)
 - `planner` calls `memory.recall(topic)`; `memory_writer` persists after approval
 
 ### Tools
@@ -71,7 +79,7 @@ All tools implement `BaseTool` → `ToolResult { content, source: Source }`. Sou
 
 ### Guardrails
 - Synthesizer may only cite registered source IDs — Pydantic validator enforces this
-- Citation verifier: local small NLI cross-encoder if under VRAM budget, else mini API entailment + overlap heuristic
+- Citation verifier: local NLI cross-encoder if under VRAM budget, else mini API entailment + overlap heuristic
 - Unverified claims flagged to critic; no evidence → "insufficient evidence" (never fabricate)
 
 ### API Surface
@@ -87,19 +95,18 @@ GET/POST /memory/preferences
 ## Key Invariants (enforced by PreToolUse hook)
 
 1. **Router authority** — model strings only in `router.py` or `.env`; never hardcoded elsewhere in `backend/app/`
-2. **Embedding isolation** — `sentence_transformers` imports only inside `backend/app/embeddings/`; never imported directly in tools, agents, or API code
+2. **Embedding isolation** — `sentence_transformers` imports only inside `backend/app/embeddings/`
 3. **Citation closure** — every tool registers a `Source`; synthesizer cites by ID; guardrails verify
 
 Violations are blocked by the `PreToolUse` hook before the file is written.
 
 ## Docstring Policy (enforced by PostToolUse hook)
 
-After every `Edit`/`Write` on a `.py` file, `.claude/hooks/check_docstrings.py` runs automatically via AST and emits a `systemMessage` warning for:
-
+After every `Edit`/`Write` on a `.py` file, `.claude/hooks/check_docstrings.py` warns (non-blocking) for:
 - Any `def`, `async def`, or `class` missing a docstring (single-expression stubs exempt)
-- Imports of notable libraries (`langgraph`, `chromadb`, `sqlalchemy`, `anthropic`, `openai`, etc.) with no inline or preceding comment
+- Imports of notable libraries with no inline or preceding comment
 
-Non-blocking — warns but does not prevent the write. Fix flagged items before moving on.
+Fix flagged items before moving on.
 
 ## Build Order
 
