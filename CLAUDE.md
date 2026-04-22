@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AetherMind is an agentic research and report generator. Full build plan: `.cursor/plans/aethermind_research_agent_plan_2dc943b3.plan.md`. Read it before starting any phase.
 
-**Current status:** Phase 2 complete — LLM gateway (`llm/client.py`, `llm/router.py`), embeddings module (`embeddings/client.py`), 28 tests passing. Next: Phase 3 (schemas + db_layer) or Phase 4 (tool_stubs).
+**Current status:** Phase 3 complete — LLM gateway (`llm/client.py`, `llm/router.py`), embeddings module (`embeddings/client.py`), schemas + db layer, 33 tests passing. Next: Phase 4 (tool_stubs).
 
 ## Coding Behavior
 
