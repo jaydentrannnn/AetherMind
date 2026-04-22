@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from app.schemas import Critique, Preference, Report, Rubric
+from app.schemas import Critique, Preference, Report, Rubric, Source, ToolResult
 
 
 def test_report_round_trip_dump_and_validate() -> None:
@@ -44,3 +44,10 @@ def test_preference_defaults_source_to_user() -> None:
     """Ensure preference records default to explicit user-supplied origin."""
     pref = Preference(user_id=uuid.uuid4(), key="tone", value="concise")
     assert pref.source == "user"
+
+
+def test_tool_result_wraps_typed_source() -> None:
+    """Ensure tool outputs carry a valid typed source payload."""
+    source = Source(source_type="web_search", title="Example")
+    result = ToolResult(content="ok", source=source)
+    assert result.source.source_type == "web_search"

@@ -65,6 +65,10 @@ class Settings(BaseSettings):
     CHROMA_HOST: str = "localhost"
     CHROMA_PORT: int = 8001
 
+    # --- Tooling ---
+    ENABLE_CODE_EXEC: bool = False
+    CODE_EXEC_PROVIDER: str = "stub"
+
     # --- CORS ---
     CORS_ORIGINS: str = "http://localhost:3000"
 

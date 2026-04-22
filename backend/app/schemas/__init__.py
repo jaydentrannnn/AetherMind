@@ -11,7 +11,9 @@ from app.schemas.models import (
     Rubric,
     Section,
     Source,
+    SourceType,
     SubQuestion,
+    ToolResult,
 )
 
 __all__ = [
@@ -25,5 +27,7 @@ __all__ = [
     "Rubric",
     "Section",
     "Source",
+    "SourceType",
     "SubQuestion",
+    "ToolResult",
 ]

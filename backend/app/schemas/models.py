@@ -5,15 +5,18 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
+
+SourceType = Literal["web_search", "arxiv", "pdf", "url", "code_exec"]
 
 
 class Source(BaseModel):
     """Represents a citable source produced by a tool call."""
 
-    id: str
-    source_type: str
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    source_type: SourceType
     title: str | None = None
     url_or_doi: str | None = None
     snippet: str | None = None
@@ -111,3 +114,10 @@ class Preference(BaseModel):
     key: str
     value: str
     source: Literal["user", "inferred"] = "user"
+
+
+class ToolResult(BaseModel):
+    """Standard output contract for all research tools."""
+
+    content: str
+    source: Source

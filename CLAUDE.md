@@ -1,12 +1,18 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Concise guidance for working in this repository.
 
 ## Project Overview
 
-AetherMind is an agentic research and report generator. Full build plan: `.cursor/plans/aethermind_research_agent_plan_2dc943b3.plan.md`. Read it before starting any phase.
+AetherMind is an agentic research/report generator.  
+Source of truth plan: `.cursor/plans/aethermind_research_agent_plan_2dc943b3.plan.md`.
 
-**Current status:** Phase 3 complete — LLM gateway (`llm/client.py`, `llm/router.py`), embeddings module (`embeddings/client.py`), schemas + db layer, 33 tests passing. Next: Phase 4 (tool_stubs).
+**Current status:** Phase 4 (`tool_stubs`) implemented.
+- `backend/app/tools/base.py` defines shared tool contracts and source registration helpers.
+- `backend/app/tools/` now has stubs for `web_search`, `arxiv_search`, `pdf_loader`, `fetch_url`, `code_exec`.
+- `ToolResult` + `SourceType` are defined in `backend/app/schemas/models.py`.
+
+**Next phase:** `langgraph_core`.
 
 ## Coding Behavior
 
@@ -28,6 +34,7 @@ AetherMind is an agentic research and report generator. Full build plan: `.curso
 ```bash
 # Backend
 cd backend
+uv sync                                  # install/update deps from pyproject
 uv run fastapi dev app/main.py           # dev server
 uv run alembic upgrade head              # run migrations
 uv run pytest tests/ -x                  # all tests, stop on first fail
@@ -112,7 +119,7 @@ Fix flagged items before moving on.
 
 ```
 bootstrap ✅ → llm_gateway + vram_router + embeddings_module ✅ → schemas + db_layer
-→ tool_stubs → langgraph_core + parallel_research + critic_loop
+→ tool_stubs ✅ → langgraph_core + parallel_research + critic_loop
 → guardrails + memory_service → fastapi_endpoints → frontend_* → eval_harness → observability + tests
 ```
 
