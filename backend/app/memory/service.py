@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from app.llm.router import Router, router as default_router
 from app.memory import sqlite_store
-from app.memory.vector_store import VectorStore
-from app.schemas import PreferenceDeltaList, RecalledMemory, Report, Source
+from app.schemas import GuardrailReport, PreferenceDeltaList, RecalledMemory, Report, Rubric, Source
+
+if TYPE_CHECKING:
+    from app.memory.vector_store import VectorStore
 
 
 class MemoryService:
@@ -22,7 +24,12 @@ class MemoryService:
     ) -> None:
         """Initialize router and vector dependencies for read/write flows."""
         self._router = llm_router or default_router
-        self._vector_store = vector_store or VectorStore()
+        if vector_store is None:
+            from app.memory.vector_store import VectorStore as _VectorStore
+
+            self._vector_store = _VectorStore()
+        else:
+            self._vector_store = vector_store
 
     async def recall(self, topic: str, *, user_id: str | None = None) -> dict[str, Any]:
         """Return planner-ready memory context with stable keys and defaults."""
@@ -45,26 +52,41 @@ class MemoryService:
     async def write(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Persist report tree and feedback-derived preference deltas."""
         draft = payload.get("draft")
-        if not isinstance(draft, Report):
-            return {"report_id": None, "claims_persisted": 0, "prefs_extracted": 0}
-
         user_id = payload.get("user_id") or sqlite_store.ensure_default_user()
-        topic = str(payload.get("topic") or draft.title)
-        sources = payload.get("sources") or []
-        sources_map = {source.id: source for source in sources if isinstance(source, Source)}
-        critique = payload.get("critique")
-        rubric_score = getattr(critique, "score", None)
-        report_id = sqlite_store.persist_report(
-            job_id=payload.get("job_id"),
-            user_id=user_id,
-            topic=topic,
-            report=draft,
-            rubric_score=rubric_score,
-            sources_map=sources_map,
-        )
+        report_id: str | None = None
+        claims_persisted = 0
+        if isinstance(draft, Report):
+            topic = str(payload.get("topic") or draft.title)
+            sources = payload.get("sources") or []
+            sources_map = {source.id: source for source in sources if isinstance(source, Source)}
+            critique = payload.get("critique")
+            rubric_score = getattr(critique, "score", None)
+            guardrail_report = payload.get("guardrail_report")
+            rubric = getattr(critique, "rubric", None)
+            trace_id = payload.get("trace_id")
+            metadata = {
+                "sources": [source.model_dump(mode="json") for source in sources_map.values()],
+                "guardrail_report": (
+                    guardrail_report.model_dump(mode="json")
+                    if isinstance(guardrail_report, GuardrailReport)
+                    else None
+                ),
+                "rubric": rubric.model_dump(mode="json") if isinstance(rubric, Rubric) else None,
+                "trace_id": str(trace_id) if trace_id is not None else None,
+            }
+            report_id = sqlite_store.persist_report(
+                job_id=payload.get("job_id"),
+                user_id=user_id,
+                topic=topic,
+                report=draft,
+                rubric_score=rubric_score,
+                sources_map=sources_map,
+                metadata=metadata,
+            )
 
-        summary_text = draft.summary or draft.title
-        await self._vector_store.add_report_summary(report_id=report_id, topic=topic, summary=summary_text)
+            summary_text = draft.summary or draft.title
+            await self._vector_store.add_report_summary(report_id=report_id, topic=topic, summary=summary_text)
+            claims_persisted = sum(len(section.claims) for section in draft.sections)
 
         feedback = payload.get("feedback")
         deltas = PreferenceDeltaList(deltas=[])
@@ -89,7 +111,6 @@ class MemoryService:
             sqlite_store.upsert_preference(user_id, delta.key, delta.value)
             await self._vector_store.add_preference_text(user_id, delta.key, f"{delta.key}: {delta.value}")
 
-        claims_persisted = sum(len(section.claims) for section in draft.sections)
         return {
             "report_id": report_id,
             "claims_persisted": claims_persisted,

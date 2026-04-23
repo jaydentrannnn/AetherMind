@@ -47,11 +47,13 @@ class VRAMViolation(RuntimeError):
 LOCAL_ALLOWLIST: frozenset[str] = frozenset(
     {
         # Chat
+        "ollama/qwen3:3b",
+        "ollama/qwen3:7b",
         "ollama/qwen3.5:3b",
         "ollama/qwen3.5:7b",
-        "ollama/qwen2.5:3b",
-        "ollama/qwen2.5:7b",
-        "ollama/llama3.2:3b",
+        "ollama/gemma4:e4b",
+        "ollama/qwen3.5:4b",
+        "ollama/llama3.5:9b",
         # Embeddings
         "ollama/nomic-embed-text",
         "ollama/bge-m3",

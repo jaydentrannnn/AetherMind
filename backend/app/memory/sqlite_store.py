@@ -95,6 +95,7 @@ def persist_report(
     report: Report,
     rubric_score: float | None,
     sources_map: dict[str, Source],
+    metadata: dict | None = None,
 ) -> str:
     """Persist report/claim/citation rows and return the persisted report id."""
     resolved_job_id = _resolve_or_create_job(job_id=job_id, user_id=user_id, topic=topic)
@@ -102,11 +103,14 @@ def persist_report(
         max_version = session.scalar(
             select(func.max(ReportEntity.version)).where(ReportEntity.job_id == resolved_job_id)
         )
+        json_blob = report.model_dump(mode="json")
+        if metadata:
+            json_blob.update(metadata)
         report_row = ReportEntity(
             job_id=resolved_job_id,
             version=(max_version or 0) + 1,
             markdown=report.markdown,
-            json_blob=report.model_dump(mode="json"),
+            json_blob=json_blob,
             rubric_score=rubric_score,
         )
         session.add(report_row)

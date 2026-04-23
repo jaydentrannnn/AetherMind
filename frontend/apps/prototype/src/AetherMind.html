@@ -1,0 +1,2351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AetherMind — Research Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg:              oklch(0.11 0.012 255);
+      --surface:         oklch(0.155 0.013 255);
+      --surface-raised:  oklch(0.195 0.013 255);
+      --surface-hover:   oklch(0.22 0.013 255);
+      --border:          oklch(0.27 0.016 255);
+      --border-subtle:   oklch(0.205 0.012 255);
+
+      --text:            oklch(0.93 0.008 80);
+      --text-muted:      oklch(0.58 0.018 255);
+      --text-dim:        oklch(0.38 0.012 255);
+
+      --accent:          oklch(0.65 0.19 240);
+      --accent-h:        oklch(0.72 0.19 240);
+      --accent-subtle:   oklch(0.65 0.07 240);
+      --accent-bg:       oklch(0.18 0.05 240);
+
+      --verified:        oklch(0.73 0.16 155);
+      --verified-bg:     oklch(0.15 0.04 155);
+      --unverified:      oklch(0.80 0.13 80);
+      --unverified-bg:   oklch(0.18 0.05 80);
+      --blocked:         oklch(0.67 0.19 25);
+      --blocked-bg:      oklch(0.16 0.05 25);
+      --progress:        oklch(0.73 0.15 200);
+      --progress-bg:     oklch(0.15 0.04 200);
+
+      --font-ui:   'IBM Plex Sans', system-ui, sans-serif;
+      --font-serif:'IBM Plex Serif', Georgia, serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+
+      --r-sm: 3px; --r: 5px; --r-lg: 9px;
+      --nav-h: 52px;
+      --trace-w: 336px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+      --shadow:    0 4px 16px rgba(0,0,0,0.5);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.6);
+    }
+
+    /* Light theme overrides */
+    [data-theme="light"] {
+      --bg:              oklch(0.975 0.004 240);
+      --surface:         oklch(0.995 0.002 240);
+      --surface-raised:  oklch(0.945 0.007 240);
+      --surface-hover:   oklch(0.925 0.009 240);
+      --border:          oklch(0.82 0.012 240);
+      --border-subtle:   oklch(0.88 0.008 240);
+
+      --text:            oklch(0.16 0.015 255);
+      --text-muted:      oklch(0.44 0.018 255);
+      --text-dim:        oklch(0.62 0.012 255);
+
+      --accent:          oklch(0.50 0.19 240);
+      --accent-h:        oklch(0.43 0.19 240);
+      --accent-subtle:   oklch(0.50 0.09 240);
+      --accent-bg:       oklch(0.93 0.05 240);
+
+      --verified:        oklch(0.45 0.16 155);
+      --verified-bg:     oklch(0.93 0.06 155);
+      --unverified:      oklch(0.52 0.13 80);
+      --unverified-bg:   oklch(0.95 0.05 80);
+      --blocked:         oklch(0.50 0.19 25);
+      --blocked-bg:      oklch(0.95 0.06 25);
+      --progress:        oklch(0.48 0.15 200);
+      --progress-bg:     oklch(0.93 0.05 200);
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow:    0 4px 16px rgba(0,0,0,0.10);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.14);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body, #root { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    button, input, textarea, select {
+      font-family: inherit;
+      font-size: inherit;
+      color: inherit;
+    }
+
+    button { cursor: pointer; }
+
+    input, textarea {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes streamIn {
+      from { opacity: 0; transform: translateY(-2px); max-height: 0; }
+      to   { opacity: 1; transform: none; max-height: 200px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
+    /* Focus rings */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Skeleton loader */
+    .skeleton {
+      background: linear-gradient(90deg,
+        var(--surface) 25%,
+        var(--surface-raised) 50%,
+        var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--r);
+    }
+
+    /* TopNav */
+    .topnav {
+      height: var(--nav-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 0;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 100;
+    }
+    .topnav-logo {
+      display: flex; align-items: center; gap: 9px;
+      cursor: pointer; user-select: none; margin-right: 32px;
+    }
+    .logo-mark {
+      width: 26px; height: 26px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; color: #fff; font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+    .logo-text {
+      font-family: var(--font-serif);
+      font-size: 16px; font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    .topnav-links { display: flex; gap: 2px; flex: 1; }
+    .nav-link {
+      background: none; border: none;
+      padding: 6px 12px;
+      border-radius: var(--r);
+      color: var(--text-muted);
+      font-size: 13.5px; font-weight: 500;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-link:hover { color: var(--text); background: var(--surface-raised); }
+    .nav-link.active { color: var(--text); background: var(--surface-raised); }
+    .topnav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-status {
+      font-size: 12px; color: var(--verified);
+      font-family: var(--font-mono);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--verified);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    /* App shell */
+    .app-shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .app-main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+    /* Btn */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 8px 16px; border: none; border-radius: var(--r);
+      font-size: 13.5px; font-weight: 500;
+      transition: all 0.15s; cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent); color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-h); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--surface-raised); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--surface-hover); border-color: var(--accent-subtle); }
+    .btn-ghost {
+      background: none; color: var(--text-muted); border: none;
+    }
+    .btn-ghost:hover { background: var(--surface-raised); color: var(--text); }
+    .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+    .btn-lg { padding: 12px 24px; font-size: 15px; }
+    .btn-icon { padding: 7px; border-radius: var(--r); }
+
+    /* Badge */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 7px; border-radius: 100px;
+      font-size: 11.5px; font-weight: 500;
+      white-space: nowrap;
+    }
+    .badge-verified   { background: var(--verified-bg); color: var(--verified); }
+    .badge-unverified { background: var(--unverified-bg); color: var(--unverified); }
+    .badge-blocked    { background: var(--blocked-bg); color: var(--blocked); }
+    .badge-progress   { background: var(--progress-bg); color: var(--progress); }
+    .badge-neutral    { background: var(--surface-raised); color: var(--text-muted); }
+    .badge-accent     { background: var(--accent-bg); color: var(--accent); }
+
+    /* Citation chip */
+    .cite-chip {
+      display: inline-flex; align-items: center;
+      background: var(--accent-bg); color: var(--accent);
+      border: 1px solid var(--accent-subtle);
+      border-radius: 3px;
+      font-size: 11px; font-weight: 600; font-family: var(--font-mono);
+      padding: 0px 4px; margin: 0 1px;
+      cursor: pointer; vertical-align: baseline;
+      line-height: 1.6;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .cite-chip:hover, .cite-chip:focus-visible { background: var(--accent-subtle); }
+    .cite-chip.unverified { background: var(--unverified-bg); color: var(--unverified); border-color: var(--unverified); }
+    .cite-chip.verified   { background: var(--verified-bg); color: var(--verified); border-color: var(--verified); }
+
+    /* Popover */
+    .popover {
+      position: absolute; z-index: 500;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px;
+      width: 300px;
+      box-shadow: var(--shadow-lg);
+      animation: fadeIn 0.15s ease;
+    }
+    .popover-title { font-weight: 600; font-size: 13px; margin-bottom: 5px; color: var(--text); }
+    .popover-url {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--accent); margin-bottom: 8px;
+      word-break: break-all;
+    }
+    .popover-snippet { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; font-style: italic; margin-bottom: 10px; }
+    .popover-footer { display: flex; align-items: center; justify-content: space-between; }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      padding: 18px;
+    }
+
+    /* Toggle */
+    .toggle-wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .toggle {
+      position: relative; width: 36px; height: 20px; cursor: pointer;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: var(--border);
+      border-radius: 20px;
+      transition: background 0.2s;
+    }
+    .toggle-slider::after {
+      content: ''; position: absolute;
+      width: 14px; height: 14px;
+      left: 3px; top: 3px;
+      background: white; border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle input:checked ~ .toggle-slider { background: var(--accent); }
+    .toggle input:checked ~ .toggle-slider::after { transform: translateX(16px); }
+
+    /* Trace panel */
+    .trace-panel {
+      width: var(--trace-w);
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-subtle);
+      display: flex; flex-direction: column;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    .trace-header {
+      padding: 12px 14px 11px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .trace-title { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-dim); font-family: var(--font-mono); }
+    .trace-scroll { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .trace-event {
+      padding: 5px 14px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.45;
+      animation: streamIn 0.2s ease forwards;
+      border-left: 2px solid transparent;
+      margin: 0 0 1px 0;
+    }
+    .trace-event:hover { background: var(--surface); }
+    .trace-event.planner   { border-left-color: var(--accent); }
+    .trace-event.researcher { border-left-color: var(--progress); }
+    .trace-event.tool      { border-left-color: var(--text-dim); }
+    .trace-event.synth     { border-left-color: var(--unverified); }
+    .trace-event.guardrails{ border-left-color: var(--blocked); }
+    .trace-event.critic    { border-left-color: var(--verified); }
+    .trace-event.revision  { border-left-color: var(--unverified); }
+    .trace-event.memory    { border-left-color: var(--accent-subtle); }
+    .trace-event.done      { border-left-color: var(--verified); }
+    .trace-event-header { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+    .trace-tag { font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; }
+    .trace-tag.planner    { background: var(--accent-bg); color: var(--accent); }
+    .trace-tag.researcher { background: var(--progress-bg); color: var(--progress); }
+    .trace-tag.tool       { background: var(--surface-raised); color: var(--text-dim); }
+    .trace-tag.synth      { background: var(--unverified-bg); color: var(--unverified); }
+    .trace-tag.guardrails { background: var(--blocked-bg); color: var(--blocked); }
+    .trace-tag.critic     { background: var(--verified-bg); color: var(--verified); }
+    .trace-tag.revision   { background: var(--unverified-bg); color: var(--unverified); }
+    .trace-tag.memory     { background: var(--accent-bg); color: var(--accent-subtle); }
+    .trace-tag.done       { background: var(--verified-bg); color: var(--verified); }
+    .trace-msg { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+    .trace-latency { font-size: 10px; color: var(--text-dim); margin-left: auto; }
+    .trace-spinner { display: inline-block; width: 9px; height: 9px; border: 1.5px solid var(--progress-bg); border-top-color: var(--progress); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 4px; }
+
+    /* Report main */
+    .report-main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .report-toolbar {
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0; background: var(--surface);
+    }
+    .report-body { flex: 1; overflow-y: auto; }
+    .report-content { max-width: 740px; margin: 0 auto; padding: 40px 32px 80px; }
+
+    /* Report typography */
+    .report-title {
+      font-family: var(--font-serif);
+      font-size: 28px; font-weight: 600;
+      line-height: 1.25; color: var(--text);
+      margin-bottom: 16px;
+      letter-spacing: -0.3px;
+    }
+    .report-summary {
+      font-family: var(--font-serif);
+      font-size: 16px; line-height: 1.7;
+      color: var(--text-muted);
+      border-left: 3px solid var(--accent);
+      padding-left: 16px; margin-bottom: 36px;
+      font-style: italic;
+    }
+    .report-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; flex-wrap: wrap; }
+    .report-section { margin-bottom: 40px; }
+    .report-section h2 {
+      font-family: var(--font-serif);
+      font-size: 20px; font-weight: 600;
+      margin-bottom: 14px; color: var(--text);
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .report-section p {
+      font-family: var(--font-serif);
+      font-size: 15.5px; line-height: 1.75;
+      color: var(--text); margin-bottom: 14px;
+    }
+    .report-section ul, .report-section ol {
+      font-family: var(--font-serif);
+      font-size: 15.5px; line-height: 1.75;
+      padding-left: 22px; margin-bottom: 14px; color: var(--text);
+    }
+    .report-section table {
+      width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13.5px;
+    }
+    .report-section th {
+      background: var(--surface); padding: 8px 12px; text-align: left;
+      border: 1px solid var(--border-subtle); font-weight: 600; color: var(--text-muted);
+      font-family: var(--font-ui); font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .report-section td {
+      padding: 8px 12px; border: 1px solid var(--border-subtle);
+      font-family: var(--font-serif); vertical-align: top;
+    }
+    .report-section code {
+      background: var(--surface-raised); padding: 1px 5px;
+      border-radius: 3px; font-family: var(--font-mono); font-size: 12.5px;
+    }
+
+    /* Sources drawer */
+    .sources-list { padding: 16px; }
+    .source-item {
+      padding: 12px 14px; border-radius: var(--r);
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 8px; background: var(--surface);
+      animation: fadeIn 0.2s ease;
+    }
+    .source-item:hover { border-color: var(--border); }
+    .source-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+    .source-url { font-family: var(--font-mono); font-size: 11px; color: var(--accent); word-break: break-all; }
+    .source-meta { display: flex; gap: 8px; margin-top: 6px; align-items: center; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 2px; padding: 0 2px; }
+    .tab-btn {
+      background: none; border: none; padding: 6px 14px;
+      border-radius: var(--r); color: var(--text-muted);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .tab-btn:hover { color: var(--text); background: var(--surface-raised); }
+    .tab-btn.active { color: var(--text); background: var(--surface-raised); }
+
+    /* Dialog overlay */
+    .dialog-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.65);
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeIn 0.15s ease;
+    }
+    .dialog {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      width: 480px; max-width: 90vw;
+      box-shadow: var(--shadow-lg);
+      animation: fadeIn 0.2s ease;
+    }
+    .dialog-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; }
+    .dialog-title { font-size: 15px; font-weight: 600; }
+    .dialog-body { padding: 20px; }
+    .dialog-footer { padding: 14px 20px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* Toast */
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 12px 16px;
+      box-shadow: var(--shadow);
+      font-size: 13.5px;
+      min-width: 240px;
+      animation: slideIn 0.2s ease;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .toast.success { border-left: 3px solid var(--verified); }
+    .toast.error   { border-left: 3px solid var(--blocked); }
+
+    /* Rubric scorecard */
+    .rubric-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-subtle); }
+    .rubric-label { flex: 1; font-size: 13px; font-weight: 500; }
+    .rubric-bar { flex: 2; height: 6px; background: var(--surface-raised); border-radius: 3px; overflow: hidden; }
+    .rubric-fill { height: 100%; border-radius: 3px; background: var(--verified); transition: width 0.8s cubic-bezier(0.2,0,0,1); }
+    .rubric-score { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); width: 28px; text-align: right; }
+
+    /* Version diff */
+    .diff-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-subtle); border-radius: var(--r); overflow: hidden; }
+    .diff-panel { background: var(--bg); padding: 16px; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; overflow-y: auto; max-height: 360px; }
+    .diff-add { background: var(--verified-bg); color: var(--verified); }
+    .diff-remove { background: var(--blocked-bg); color: var(--blocked); }
+
+    /* Diagnostics footer */
+    .diagnostics-footer {
+      padding: 8px 24px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg);
+      display: flex; align-items: center; gap: 12px;
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    /* Home page */
+    .home-page { flex: 1; overflow-y: auto; }
+    .home-inner { max-width: 680px; margin: 0 auto; padding: 72px 24px 60px; }
+    .home-heading {
+      font-family: var(--font-serif);
+      font-size: 32px; font-weight: 600;
+      line-height: 1.2; margin-bottom: 8px;
+      letter-spacing: -0.4px;
+    }
+    .home-sub { color: var(--text-muted); font-size: 15px; margin-bottom: 40px; line-height: 1.5; }
+
+    .topic-form { margin-bottom: 24px; }
+    .topic-textarea {
+      width: 100%; min-height: 120px;
+      padding: 16px 18px;
+      font-family: var(--font-serif);
+      font-size: 16px; line-height: 1.65;
+      resize: vertical;
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .topic-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+    .topic-textarea::placeholder { color: var(--text-dim); font-style: italic; }
+
+    .adv-options { margin-bottom: 28px; }
+    .adv-toggle-btn {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 13px; display: flex; align-items: center; gap: 6px;
+      padding: 4px 0; cursor: pointer; user-select: none;
+      transition: color 0.15s;
+    }
+    .adv-toggle-btn:hover { color: var(--text); }
+    .adv-toggle-btn svg { transition: transform 0.2s; }
+    .adv-toggle-btn.open svg { transform: rotate(90deg); }
+    .adv-panel {
+      margin-top: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      padding: 18px;
+      display: flex; flex-direction: column; gap: 18px;
+      animation: fadeIn 0.2s ease;
+    }
+    .adv-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); margin-bottom: 10px; font-family: var(--font-mono); }
+    .depth-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono); }
+    .depth-slider { width: 100%; accent-color: var(--accent); }
+    .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .domain-input-wrap { display: flex; gap: 8px; }
+    .domain-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .domain-tag { background: var(--accent-bg); color: var(--accent); border-radius: 100px; padding: 2px 10px 2px 10px; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+    .domain-tag-rm { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
+
+    /* Memory page */
+    .memory-page { flex: 1; overflow-y: auto; }
+    .memory-inner { max-width: 820px; margin: 0 auto; padding: 40px 24px 80px; }
+    .memory-heading { font-family: var(--font-serif); font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+    .memory-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 36px; }
+    .pref-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    .pref-table th { background: var(--surface); padding: 8px 12px; text-align: left; border: 1px solid var(--border-subtle); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-dim); font-family: var(--font-mono); }
+    .pref-table td { padding: 8px 12px; border: 1px solid var(--border-subtle); vertical-align: middle; font-size: 13px; }
+    .pref-table tr:hover td { background: var(--surface); }
+    .pref-table .pref-key { font-family: var(--font-mono); font-size: 12.5px; color: var(--accent); }
+    .pref-source { font-size: 11px; color: var(--text-dim); }
+
+    .search-panel { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-lg); padding: 18px; }
+    .search-input { width: 100%; padding: 10px 14px; border-radius: var(--r); font-size: 14px; }
+    .search-result { padding: 12px; border-radius: var(--r); border: 1px solid var(--border-subtle); background: var(--bg); margin-top: 8px; animation: fadeIn 0.2s ease; }
+    .search-result:hover { border-color: var(--border); background: var(--surface); cursor: pointer; }
+    .search-result-title { font-size: 13.5px; font-weight: 500; margin-bottom: 3px; }
+    .search-result-snippet { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+    .search-score { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+    /* Empty / loading states */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+    .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-msg { font-size: 14px; }
+
+    /* Guardrails */
+    .guardrail-item { padding: 12px 14px; border-radius: var(--r); margin-bottom: 8px; }
+    .guardrail-item.unverified { background: var(--unverified-bg); border: 1px solid var(--unverified); }
+    .guardrail-item.blocked    { background: var(--blocked-bg);    border: 1px solid var(--blocked); }
+    .guardrail-item.ok         { background: var(--verified-bg);   border: 1px solid var(--verified); }
+    .guardrail-claim { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+    .guardrail-rationale { font-size: 12px; color: var(--text-muted); font-style: italic; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+<script type="text/babel">
+// === src/mockdata.js ===
+// Mock data — derived from backend/app/schemas/models.py shapes
+// Confirm all field names against OpenAPI when available
+
+const MOCK_SOURCES = [
+  { id: "s1", title: "Emergent Abilities of Large Language Models", url: "https://arxiv.org/abs/2206.07682", domain: "arxiv.org", snippet: "We define emergent abilities as those that are not present in smaller models but emerge in larger models, often sharply and unpredictably.", verified: true, type: "arxiv" },
+  { id: "s2", title: "In-context Learning and Induction Heads", url: "https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html", domain: "transformer-circuits.pub", snippet: "Induction heads are a circuit that appears to implement a simple form of in-context learning, completing patterns across multiple tokens.", verified: true, type: "web" },
+  { id: "s3", title: "Scaling Laws for Neural Language Models", url: "https://arxiv.org/abs/2001.08361", domain: "arxiv.org", snippet: "Language model performance depends on scale: model parameters, dataset size, and compute budget according to power-law relationships.", verified: true, type: "arxiv" },
+  { id: "s4", title: "A Mathematical Framework for Transformer Circuits", url: "https://transformer-circuits.pub/2021/framework/index.html", domain: "transformer-circuits.pub", snippet: "We introduce a mathematical framework for studying transformer circuits, enabling analysis of how attention heads compose to compute.", verified: true, type: "web" },
+  { id: "s5", title: "Are Emergent Abilities of LLMs a Mirage?", url: "https://arxiv.org/abs/2304.15004", domain: "arxiv.org", snippet: "We suggest that emergent abilities may be partially an artifact of the metrics used for evaluation rather than a fundamental property.", verified: false, type: "arxiv" },
+  { id: "s6", title: "Attention Is All You Need", url: "https://arxiv.org/abs/1706.03762", domain: "arxiv.org", snippet: "The dominant sequence transduction models are based on recurrent or convolutional neural networks. We propose the Transformer, a model architecture based solely on attention mechanisms.", verified: true, type: "arxiv" },
+  { id: "s7", title: "Grokking: Generalization Beyond Overfitting", url: "https://arxiv.org/abs/2201.02177", domain: "arxiv.org", snippet: "We report that neural networks trained on small algorithmic datasets begin by memorizing before transitioning to generalization, sometimes well after apparent convergence.", verified: true, type: "arxiv" },
+  { id: "s8", title: "Interpretability in the Wild: GPT-2 Small", url: "https://arxiv.org/abs/2209.11895", domain: "arxiv.org", snippet: "We identify circuits in GPT-2 small responsible for indirect object identification, providing mechanistic evidence for structured feature reuse.", verified: true, type: "arxiv" },
+];
+
+const MOCK_REPORT = {
+  id: "rpt-ae7f21b",
+  job_id: "job-ae7f21b",
+  title: "Transformer Attention Mechanisms and Emergent Capabilities in Large Language Models",
+  summary: "This report synthesizes current understanding of how transformer attention mechanisms give rise to emergent capabilities in large language models, examining evidence from scaling laws, mechanistic interpretability, and theoretical frameworks. The evidence suggests emergence is real but its causes remain contested.",
+  created_at: "2026-04-21T14:32:11Z",
+  depth: "deep",
+  sections: [
+    {
+      id: "sec-1",
+      title: "Background: Transformer Attention",
+      content: [
+        { type: "p", text: "The transformer architecture, introduced by Vaswani et al. (2017), replaces recurrent computation with self-attention: each token attends to all others via learned query-key-value projections.", citations: ["s6"] },
+        { type: "p", text: "Multi-head attention allows the model to jointly attend to information from different representation subspaces. Each attention head independently computes attention weights, and outputs are concatenated and projected.", citations: ["s6"] },
+        { type: "p", text: "The mathematical framework of Elhage et al. (2021) shows that attention heads can be understood as moving information between token positions via low-rank bilinear operations on the residual stream.", citations: ["s4"] },
+      ]
+    },
+    {
+      id: "sec-2",
+      title: "Defining Emergent Capabilities",
+      content: [
+        { type: "p", text: "Wei et al. (2022) define emergent abilities as capabilities absent in smaller models that appear in larger ones — often sharply and unpredictably, not as a gradual continuation of smaller-scale trends.", citations: ["s1"] },
+        { type: "p", text: "Examples include multi-step arithmetic, chain-of-thought reasoning, and novel analogical reasoning tasks. These tasks typically require composing multiple sub-skills that each individually scale smoothly.", citations: ["s1", "s3"] },
+        {
+          type: "table",
+          headers: ["Capability", "Approximate Threshold", "Evidence Type"],
+          rows: [
+            ["Chain-of-Thought", "~100B params", "Empirical"],
+            ["Arithmetic (multi-digit)", "~50B params", "Empirical"],
+            ["Analogical reasoning", "~70B params", "Empirical"],
+            ["In-context few-shot", "~10B params", "Empirical"],
+          ]
+        },
+        { type: "p", text: "However, Schaeffer et al. (2023) argue that emergence may be an artifact of non-linear or discontinuous evaluation metrics — a smooth underlying capability can appear emergent if measured with a threshold metric.", citations: ["s5"] },
+      ]
+    },
+    {
+      id: "sec-3",
+      title: "Mechanistic Interpretability: Induction Heads",
+      content: [
+        { type: "p", text: "Olsson et al. (2022) identify induction heads as a two-head circuit that enables in-context learning. One head copies previous token context; the other attends to positions following that context, enabling pattern completion across the sequence.", citations: ["s2"] },
+        { type: "p", text: "This circuit forms a phase transition during training: models without induction heads show in-context learning loss curves that do not improve; models with them improve substantially. This constitutes a mechanistic account of one form of emergence.", citations: ["s2", "s4"] },
+        { type: "p", text: "Wang et al. (2022) identify circuits responsible for indirect object identification in GPT-2 small, demonstrating that multi-head attention composes across layers to perform structured named-entity resolution.", citations: ["s8"] },
+      ]
+    },
+    {
+      id: "sec-4",
+      title: "Scaling Laws and Phase Transitions",
+      content: [
+        { type: "p", text: "Kaplan et al. (2020) establish that language model cross-entropy loss follows power laws in model size N, data D, and compute C, with clear separation of regimes. Emergent tasks, however, may require combinations of capabilities that don't individually predict task-level phase transitions.", citations: ["s3"] },
+        { type: "p", text: "Power et al. (2022) describe grokking — a phase transition from memorization to generalization that occurs long after apparent training convergence. This provides evidence that capability acquisition can be discontinuous in training even on small algorithmic tasks.", citations: ["s7"] },
+      ]
+    },
+    {
+      id: "sec-5",
+      title: "Synthesis and Implications",
+      content: [
+        { type: "p", text: "The evidence is consistent with a picture where attention mechanisms enable compositional computation through circuit formation. Emergence at the task level can arise from threshold effects on composed capabilities, or from changes in measurement, or both.", citations: ["s1", "s2", "s4"] },
+        { type: "p", text: "From a safety perspective, emergent capabilities imply that scale-based risk assessments may be unreliable if capabilities appear discontinuously. Mechanistic interpretability research on attention circuits provides the most tractable path toward predicting emergent capabilities before they appear.", citations: ["s1", "s5"] },
+      ]
+    }
+  ],
+  sources: MOCK_SOURCES,
+  guardrails: {
+    unverified_claims: [
+      { claim: "Emergent abilities are absent at smaller scales", rationale: "Source s5 disputes this framing as metric-dependent", source_ids: ["s5"] },
+    ],
+    policy_violations: [],
+    closure_violations: [
+      { claim: "Chain-of-thought emerges at exactly 100B parameters", rationale: "Threshold is approximate and task-dependent; revised to 'approximately'", source_ids: ["s1"] },
+    ]
+  },
+  rubric: {
+    depth: { score: 4, max: 5, label: "Depth of Analysis" },
+    citations: { score: 5, max: 5, label: "Citation Quality" },
+    clarity: { score: 5, max: 5, label: "Clarity & Structure" },
+    coverage: { score: 4, max: 5, label: "Topic Coverage" },
+    accuracy: { score: 4, max: 5, label: "Factual Accuracy" },
+  },
+  versions: [
+    { id: "v1", created_at: "2026-04-21T14:28:00Z", label: "Draft v1", summary_diff: "Initial synthesis; 5 sources, no revision." },
+    { id: "v2", created_at: "2026-04-21T14:30:44Z", label: "Revised v2", summary_diff: "Guardrails revision: softened emergence threshold claim; added Schaeffer citation." },
+    { id: "v3", created_at: "2026-04-21T14:32:11Z", label: "Final v3 (current)", summary_diff: "Critic pass: expanded Implications section; improved table formatting." },
+  ],
+  trace_id: "lf-trace-9b2ca4f1",
+  request_id: "req-1714704731-ae7f",
+};
+
+const MOCK_TRACE_EVENTS = [
+  { id: 1,  type: "planner",    tag: "planner",    msg: "Decomposing topic into sub-questions",         ts: 0 },
+  { id: 2,  type: "planner",    tag: "planner",    msg: "Generated 6 sub-questions",                    ts: 600, detail: "1. What is transformer attention?\n2. How is emergence defined?\n3. What are induction heads?\n4. What do scaling laws predict?\n5. Is emergence an artifact?\n6. Implications for safety?" },
+  { id: 3,  type: "researcher", tag: "researcher", msg: "Fan-out: launching 6 parallel queries",        ts: 900 },
+  { id: 4,  type: "tool",       tag: "tool",       msg: "web_search: transformer attention mechanisms", ts: 1100, latency: "94ms" },
+  { id: 5,  type: "tool",       tag: "tool",       msg: "arxiv: emergent abilities LLMs",               ts: 1150, latency: "312ms" },
+  { id: 6,  type: "tool",       tag: "tool",       msg: "web_search: induction heads circuits",         ts: 1200, latency: "88ms" },
+  { id: 7,  type: "tool",       tag: "tool",       msg: "arxiv: scaling laws neural language models",   ts: 1300, latency: "274ms" },
+  { id: 8,  type: "tool",       tag: "tool",       msg: "pdf_fetch: Vaswani et al. 2017",               ts: 1400, latency: "521ms" },
+  { id: 9,  type: "tool",       tag: "tool",       msg: "arxiv: grokking generalization phase",         ts: 1450, latency: "298ms" },
+  { id: 10, type: "researcher", tag: "researcher", msg: "Collected 8 sources, 34 chunks indexed",       ts: 2400 },
+  { id: 11, type: "synth",      tag: "synth",      msg: "Synthesizing: merging source clusters",        ts: 2600 },
+  { id: 12, type: "synth",      tag: "synth",      msg: "Drafting section 1/5: Background",             ts: 3100 },
+  { id: 13, type: "synth",      tag: "synth",      msg: "Drafting section 2/5: Emergence",              ts: 3500 },
+  { id: 14, type: "synth",      tag: "synth",      msg: "Drafting section 3/5: Induction Heads",        ts: 3900 },
+  { id: 15, type: "synth",      tag: "synth",      msg: "Drafting sections 4–5",                        ts: 4200 },
+  { id: 16, type: "guardrails", tag: "guardrails", msg: "Citation verification: 7/8 verified",          ts: 4800, detail: "Unverified: s5 (disputed claim)" },
+  { id: 17, type: "guardrails", tag: "guardrails", msg: "Policy check: PASS",                           ts: 5000 },
+  { id: 18, type: "guardrails", tag: "guardrails", msg: "Closure check: 1 claim flagged for revision",  ts: 5200 },
+  { id: 19, type: "critic",     tag: "critic",     msg: "Rubric evaluation running",                    ts: 5500 },
+  { id: 20, type: "critic",     tag: "critic",     msg: "Scores: Depth 4 · Citations 5 · Clarity 5 · Coverage 4 · Accuracy 4", ts: 6000 },
+  { id: 21, type: "revision",   tag: "revision",   msg: "Revision pass 1: softening emergence threshold claim", ts: 6300 },
+  { id: 22, type: "revision",   tag: "revision",   msg: "Revision complete — diff applied",             ts: 7100 },
+  { id: 23, type: "memory",     tag: "memory",     msg: "Writing report to SQLite",                     ts: 7400 },
+  { id: 24, type: "memory",     tag: "memory",     msg: "Indexing 34 chunks into Chroma",               ts: 7600 },
+  { id: 25, type: "done",       tag: "done",       msg: "Report finalized · job-ae7f21b",               ts: 8000 },
+];
+
+const MOCK_PREFERENCES = [
+  { key: "response_language", value: "en", source: "user", updatedAt: "2026-04-18" },
+  { key: "citation_style", value: "inline", source: "user", updatedAt: "2026-04-19" },
+  { key: "default_depth", value: "standard", source: "inferred", updatedAt: "2026-04-20" },
+  { key: "preferred_output_format", value: "structured_sections", source: "user", updatedAt: "2026-04-15" },
+  { key: "summarize_sources", value: "true", source: "inferred", updatedAt: "2026-04-21" },
+];
+
+const MOCK_ALLOW_DOMAINS = ["arxiv.org", "nature.com", "science.org", "semanticscholar.org"];
+const MOCK_DENY_DOMAINS  = ["reddit.com", "quora.com"];
+
+const MOCK_SEMANTIC_RESULTS = [
+  { id: "rpt-b3c12", title: "Mechanistic Interpretability in Sparse Autoencoders", score: 0.94, snippet: "Analysis of feature decomposition in transformer residual streams using sparse autoencoders, revealing polysemantic neurons.", date: "2026-04-10" },
+  { id: "rpt-c8d34", title: "Chain-of-Thought Prompting and Reasoning Depth", score: 0.87, snippet: "Systematic evaluation of chain-of-thought performance across model scales and arithmetic task complexities.", date: "2026-03-28" },
+  { id: "rpt-d2a91", title: "Phase Transitions in Neural Network Generalization", score: 0.82, snippet: "Survey of grokking-like transitions in deep networks, examining the relationship between regularization and delayed generalization.", date: "2026-03-14" },
+];
+
+Object.assign(window, {
+  MOCK_SOURCES, MOCK_REPORT, MOCK_TRACE_EVENTS,
+  MOCK_PREFERENCES, MOCK_ALLOW_DOMAINS, MOCK_DENY_DOMAINS, MOCK_SEMANTIC_RESULTS
+});
+
+</script>
+
+<script type="text/babel">
+// === src/primitives.jsx ===
+// Shared primitive components
+const { useState, useEffect, useRef, useCallback } = React;
+
+function Spinner({ size = 14, color = 'var(--accent)' }) {
+  return (
+    <span style={{
+      display: 'inline-block', width: size, height: size,
+      border: `2px solid color-mix(in oklch, ${color} 20%, transparent)`,
+      borderTopColor: color,
+      borderRadius: '50%',
+      animation: 'spin 0.7s linear infinite',
+      flexShrink: 0,
+    }} />
+  );
+}
+
+function Badge({ variant = 'neutral', children }) {
+  return <span className={`badge badge-${variant}`}>{children}</span>;
+}
+
+function Btn({ variant = 'secondary', size, icon, children, ...props }) {
+  return (
+    <button className={`btn btn-${variant}${size ? ' btn-' + size : ''}${!children ? ' btn-icon' : ''}`} {...props}>
+      {icon && <span style={{ display: 'flex', alignItems: 'center' }}>{icon}</span>}
+      {children}
+    </button>
+  );
+}
+
+function Toggle({ label, sublabel, checked, onChange }) {
+  return (
+    <div className="toggle-wrap">
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
+        {sublabel && <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{sublabel}</div>}
+      </div>
+      <label className="toggle">
+        <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
+        <span className="toggle-slider" />
+      </label>
+    </div>
+  );
+}
+
+function Tabs({ tabs, active, onChange }) {
+  return (
+    <div className="tabs">
+      {tabs.map(t => (
+        <button key={t.id} className={`tab-btn${active === t.id ? ' active' : ''}`} onClick={() => onChange(t.id)}>
+          {t.label}
+          {t.count != null && (
+            <span style={{ marginLeft: 5, fontSize: 11, background: 'var(--surface-raised)', borderRadius: 100, padding: '1px 5px', color: 'var(--text-muted)' }}>
+              {t.count}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Toast({ toasts }) {
+  return (
+    <div className="toast-container">
+      {toasts.map(t => (
+        <div key={t.id} className={`toast ${t.type}`}>
+          <span>{t.type === 'success' ? '✓' : '✕'}</span>
+          {t.msg}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function useToasts() {
+  const [toasts, setToasts] = useState([]);
+  const add = useCallback((msg, type = 'success') => {
+    const id = Date.now();
+    setToasts(p => [...p, { id, msg, type }]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3000);
+  }, []);
+  return [toasts, add];
+}
+
+function Dialog({ title, children, footer, onClose }) {
+  useEffect(() => {
+    const handler = e => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+  return (
+    <div className="dialog-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="dialog" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="dialog-header">
+          <span className="dialog-title">{title}</span>
+          <Btn variant="ghost" size="sm" onClick={onClose} aria-label="Close">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </Btn>
+        </div>
+        <div className="dialog-body">{children}</div>
+        {footer && <div className="dialog-footer">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+// Icon components
+const Icons = {
+  ChevronRight: () => (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Copy: () => (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+      <path d="M3 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v1" stroke="currentColor" strokeWidth="1.3"/>
+    </svg>
+  ),
+  ExternalLink: () => (
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+      <path d="M6.5 1.5H9.5V4.5M9.5 1.5L5 6M1.5 3.5h3m-3 4h6v-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Plus: () => (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1.5v10M1.5 6.5h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Trash: () => (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M1.5 3.5h10M4.5 3.5V2h4v1.5M5.5 6v4.5M7.5 6v4.5M2.5 3.5l.5 7a1 1 0 001 1h5a1 1 0 001-1l.5-7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Search: () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
+      <path d="M9.5 9.5l3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  ),
+  Edit: () => (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M8.5 2l2.5 2.5-7 7H1.5V9l7-7z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Check: () => (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M2 6.5l3.5 3.5 5.5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+};
+
+Object.assign(window, { Spinner, Badge, Btn, Toggle, Tabs, Toast, Dialog, Icons, useToasts });
+
+</script>
+
+<script type="text/babel">
+// === src/layout.jsx ===
+// Layout: AppShell + TopNav
+const { useState: useStateL, useEffect: useEffectL } = React;
+
+function ThemeToggle({ dark, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      style={{
+        background: 'var(--surface-raised)', border: '1px solid var(--border)',
+        borderRadius: 'var(--r)', padding: '5px 8px', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: 6,
+        color: 'var(--text-muted)', fontSize: 12, fontWeight: 500,
+        transition: 'all 0.15s',
+      }}
+      onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
+      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+    >
+      {dark
+        ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="3" stroke="currentColor" strokeWidth="1.3"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+        : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M11.5 8.5A5 5 0 015.5 2.5a5.5 5.5 0 100 9 5 5 0 006-3z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>
+      }
+      {dark ? 'Light' : 'Dark'}
+    </button>
+  );
+}
+
+function TopNav({ route, navigate, dark, onToggleTheme }) {
+  return (
+    <nav className="topnav">
+      <div className="topnav-logo" onClick={() => navigate('/')} role="button" tabIndex={0}
+        onKeyDown={e => e.key === 'Enter' && navigate('/')}>
+        <div className="logo-mark">Æ</div>
+        <span className="logo-text">AetherMind</span>
+      </div>
+      <div className="topnav-links">
+        <button
+          className={`nav-link${route === '/' ? ' active' : ''}`}
+          onClick={() => navigate('/')}
+        >Research</button>
+        <button
+          className={`nav-link${route.startsWith('/reports/') ? ' active' : ''}`}
+          onClick={() => {
+            const last = localStorage.getItem('aethermind-last-report') || 'demo';
+            navigate('/reports/' + last);
+          }}
+        >Report</button>
+        <button
+          className={`nav-link${route === '/memory' ? ' active' : ''}`}
+          onClick={() => navigate('/memory')}
+        >Memory</button>
+      </div>
+      <div className="topnav-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <ThemeToggle dark={dark} onToggle={onToggleTheme} />
+        <div className="nav-status">
+          <span className="status-dot" />
+          API connected
+        </div>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: 'var(--accent-bg)',
+          border: '1px solid var(--accent-subtle)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 12, fontWeight: 600, color: 'var(--accent)',
+          cursor: 'pointer',
+        }} title="Account">JD</div>
+      </div>
+    </nav>
+  );
+}
+
+function AppShell({ route, navigate, dark, onToggleTheme, children }) {
+  return (
+    <div className="app-shell">
+      <TopNav route={route} navigate={navigate} dark={dark} onToggleTheme={onToggleTheme} />
+      <div className="app-main">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { AppShell, TopNav, ThemeToggle });
+
+</script>
+
+<script type="text/babel">
+// === src/home.jsx ===
+// Home page — TopicForm + AdvancedOptions
+const { useState: useStateH, useRef: useRefH } = React;
+
+function HomePage({ navigate }) {
+  const [topic, setTopic] = useStateH('');
+  const [open, setOpen] = useStateH(false);
+  const [depth, setDepth] = useStateH(1); // 0=quick,1=standard,2=deep
+  const [tools, setTools] = useStateH({ web: true, arxiv: true, pdf: true, url: false, code: false });
+  const [domainInput, setDomainInput] = useStateH('');
+  const [domains, setDomains] = useStateH([]);
+  const [submitting, setSubmitting] = useStateH(false);
+  const textareaRef = useRefH(null);
+
+  const depthLabels = ['Quick', 'Standard', 'Deep'];
+  const depthDescs  = ['~30s · 3–5 sources', '~90s · 8–12 sources', '~3min · 20+ sources'];
+
+  const addDomain = () => {
+    const v = domainInput.trim().replace(/^https?:\/\//, '').split('/')[0];
+    if (v && !domains.includes(v)) setDomains(p => [...p, v]);
+    setDomainInput('');
+  };
+
+  const submit = () => {
+    if (!topic.trim()) { textareaRef.current?.focus(); return; }
+    setSubmitting(true);
+    setTimeout(() => { navigate('/reports/demo'); }, 600);
+  };
+
+  return (
+    <div className="home-page">
+      <div className="home-inner">
+        {/* Header */}
+        <div style={{ marginBottom: 48 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'var(--accent-bg)', border: '1px solid var(--accent-subtle)',
+            borderRadius: 100, padding: '4px 12px', marginBottom: 20,
+            fontSize: 12, color: 'var(--accent)', fontFamily: 'var(--font-mono)',
+            fontWeight: 500,
+          }}>
+            <span className="status-dot" style={{ width: 5, height: 5 }} />
+            AetherMind Research Agent · v2.1
+          </div>
+          <h1 className="home-heading">What would you<br />like to research?</h1>
+          <p className="home-sub">
+            Formulate a research question or topic. The agent will plan sub-questions,
+            search across sources, synthesize a structured report, and verify citations.
+          </p>
+        </div>
+
+        {/* Topic input */}
+        <div className="topic-form">
+          <textarea
+            ref={textareaRef}
+            className="topic-textarea"
+            placeholder="e.g. How do transformer attention mechanisms give rise to emergent capabilities in large language models?"
+            value={topic}
+            onChange={e => setTopic(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit(); }}
+            data-testid="topic-input"
+          />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+              ⌘↵ to submit
+            </span>
+            <Btn
+              variant="primary"
+              size="lg"
+              onClick={submit}
+              disabled={submitting || !topic.trim()}
+              data-testid="submit-research"
+              icon={submitting ? <Spinner size={15} color="#fff" /> : null}
+            >
+              {submitting ? 'Starting…' : 'Start Research'}
+            </Btn>
+          </div>
+        </div>
+
+        {/* Advanced options */}
+        <div className="adv-options">
+          <button
+            className={`adv-toggle-btn${open ? ' open' : ''}`}
+            onClick={() => setOpen(p => !p)}
+            aria-expanded={open}
+          >
+            <Icons.ChevronRight />
+            Advanced options
+            <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 4, fontFamily: 'var(--font-mono)' }}>
+              {depthLabels[depth]} · {Object.values(tools).filter(Boolean).length} tools
+            </span>
+          </button>
+
+          {open && (
+            <div className="adv-panel">
+              {/* Depth */}
+              <div>
+                <div className="adv-section-label">Research Depth</div>
+                <input
+                  type="range" min={0} max={2} step={1}
+                  value={depth}
+                  onChange={e => setDepth(+e.target.value)}
+                  className="depth-slider"
+                  aria-label="Research depth"
+                />
+                <div className="depth-labels">
+                  {depthLabels.map((l, i) => (
+                    <span key={l} style={{ color: depth === i ? 'var(--accent)' : undefined, fontWeight: depth === i ? 600 : 400 }}>
+                      {l}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                  {depthDescs[depth]}
+                </div>
+              </div>
+
+              {/* Tools */}
+              <div>
+                <div className="adv-section-label">Source Tools</div>
+                <div className="tools-grid">
+                  {[
+                    { key: 'web',   label: 'Web Search',   sub: 'General web results' },
+                    { key: 'arxiv', label: 'arXiv',        sub: 'Academic preprints' },
+                    { key: 'pdf',   label: 'PDF Fetch',    sub: 'Full-text extraction' },
+                    { key: 'url',   label: 'URL Fetch',    sub: 'Specific pages' },
+                    { key: 'code',  label: 'Code Exec',    sub: 'Calculations & analysis' },
+                  ].map(t => (
+                    <Toggle
+                      key={t.key}
+                      label={t.label}
+                      sublabel={t.sub}
+                      checked={tools[t.key]}
+                      onChange={v => setTools(p => ({ ...p, [t.key]: v }))}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Domain hints */}
+              <div>
+                <div className="adv-section-label">Preferred Domains <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional hints)</span></div>
+                <div className="domain-input-wrap">
+                  <input
+                    type="text"
+                    value={domainInput}
+                    onChange={e => setDomainInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addDomain(); } }}
+                    placeholder="e.g. nature.com"
+                    style={{ flex: 1, padding: '7px 11px', fontSize: 13 }}
+                    aria-label="Add preferred domain"
+                  />
+                  <Btn variant="secondary" size="sm" onClick={addDomain} icon={<Icons.Plus />}>Add</Btn>
+                </div>
+                {domains.length > 0 && (
+                  <div className="domain-tags">
+                    {domains.map(d => (
+                      <span key={d} className="domain-tag">
+                        {d}
+                        <button className="domain-tag-rm" onClick={() => setDomains(p => p.filter(x => x !== d))} aria-label={`Remove ${d}`}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Recent research */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginBottom: 12 }}>
+            Recent
+          </div>
+          {[
+            { id: 'demo', title: 'Transformer Attention Mechanisms and Emergent Capabilities', date: 'Today', depth: 'Deep' },
+            { id: 'x2',   title: 'Mechanistic Interpretability in Sparse Autoencoders',       date: 'Apr 18', depth: 'Standard' },
+            { id: 'x3',   title: 'Phase Transitions in Neural Network Generalization',         date: 'Apr 14', depth: 'Quick' },
+          ].map(r => (
+            <div
+              key={r.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '11px 14px', borderRadius: 'var(--r)',
+                border: '1px solid var(--border-subtle)',
+                marginBottom: 6,
+                transition: 'border-color 0.15s, background 0.15s',
+                background: 'var(--surface)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--surface-raised)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--surface)'; }}
+            >
+              <div style={{ width: 32, height: 32, borderRadius: 'var(--r-sm)', background: 'var(--accent-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="var(--accent)" strokeWidth="1.2"/>
+                  <path d="M4 5h6M4 7h4M4 9h5" stroke="var(--accent)" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>{r.date} · {r.depth}</div>
+              </div>
+              <Btn variant="secondary" size="sm" onClick={() => navigate('/reports/' + r.id)}
+                style={{ flexShrink: 0 }}>
+                Open Report
+              </Btn>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { HomePage });
+
+</script>
+
+<script type="text/babel">
+// === src/report-trace.jsx ===
+// Agent Trace panel — simulated SSE streaming
+const { useState: useStateT, useEffect: useEffectT, useRef: useRefT } = React;
+
+function AgentTrace({ running, onComplete }) {
+  const [events, setEvents] = useStateT([]);
+  const [expanded, setExpanded] = useStateT({});
+  const [done, setDone] = useStateT(false);
+  const scrollRef = useRefT(null);
+  const timerRef = useRefT(null);
+  const [copied, setCopied] = useStateT(false);
+
+  useEffectT(() => {
+    if (!running) return;
+    setEvents([]); setDone(false);
+    let i = 0;
+    const schedule = () => {
+      if (i >= MOCK_TRACE_EVENTS.length) { setDone(true); onComplete && onComplete(); return; }
+      const ev = MOCK_TRACE_EVENTS[i];
+      const delay = i === 0 ? 300 : ev.ts - MOCK_TRACE_EVENTS[i - 1].ts;
+      timerRef.current = setTimeout(() => {
+        setEvents(prev => [...prev, ev]);
+        i++;
+        schedule();
+      }, Math.max(delay * 0.55, 80));
+    };
+    schedule();
+    return () => clearTimeout(timerRef.current);
+  }, [running]);
+
+  useEffectT(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [events]);
+
+  const copyDebug = () => {
+    const bundle = JSON.stringify({ trace_id: MOCK_REPORT.trace_id, request_id: MOCK_REPORT.request_id, events }, null, 2);
+    navigator.clipboard?.writeText(bundle).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const MAX_VISIBLE = 200; // virtualize beyond this in production (react-virtual)
+  const isOverflow = events.length > MAX_VISIBLE;
+  const visibleEvents = isOverflow ? events.slice(-MAX_VISIBLE) : events;
+  const isStreaming = running && !done;
+
+  return (
+    <div className="trace-panel">
+      <div className="trace-header">
+        <span className="trace-title">Agent Trace</span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {isStreaming && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--progress)', fontFamily: 'var(--font-mono)' }}>
+              <Spinner size={10} color="var(--progress)" /> streaming
+            </span>
+          )}
+          {done && (
+            <span style={{ fontSize: 11, color: 'var(--verified)', fontFamily: 'var(--font-mono)' }}>✓ done</span>
+          )}
+          <Btn variant="ghost" size="sm" onClick={copyDebug}
+            title="Copy debug bundle" aria-label="Copy debug bundle"
+            style={{ fontSize: 11, color: copied ? 'var(--verified)' : undefined }}>
+            {copied ? <Icons.Check /> : <Icons.Copy />}
+          </Btn>
+        </div>
+      </div>
+
+      {isOverflow && (
+        <div style={{
+          padding: '5px 14px', background: 'var(--unverified-bg)',
+          borderBottom: '1px solid var(--unverified)',
+          fontSize: 11, color: 'var(--unverified)', fontFamily: 'var(--font-mono)',
+          flexShrink: 0,
+        }}>
+          ⚠ Showing last {MAX_VISIBLE} of {events.length} events — use react-virtual for full trace
+        </div>
+      )}
+
+      <div className="trace-scroll" ref={scrollRef}>
+        {visibleEvents.length === 0 && isStreaming && (
+          <div style={{ padding: '16px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+              <Spinner size={11} color="var(--text-dim)" />
+              Initializing…
+            </div>
+          </div>
+        )}
+        {visibleEvents.map(ev => (
+          <TraceEvent key={ev.id} ev={ev} expanded={!!expanded[ev.id]} onToggle={() => setExpanded(p => ({ ...p, [ev.id]: !p[ev.id] }))} />
+        ))}
+        {isStreaming && visibleEvents.length > 0 && (
+          <div style={{ padding: '4px 14px 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className="trace-spinner" />
+            <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+              {lastType === 'synth' ? 'synthesizing…' : lastType === 'guardrails' ? 'verifying…' : lastType === 'critic' ? 'evaluating…' : 'processing…'}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Stats bar */}
+      {done && (
+        <div style={{
+          padding: '8px 14px', borderTop: '1px solid var(--border-subtle)',
+          display: 'flex', gap: 12, flexShrink: 0,
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)',
+        }}>
+          <span>{events.length} events</span>
+          <span>·</span>
+          <span style={{ color: 'var(--verified)' }}>7/8 verified</span>
+          <span>·</span>
+          <span>~8s</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TraceEvent({ ev, expanded, onToggle }) {
+  const hasDetail = !!ev.detail;
+  return (
+    <div className={`trace-event ${ev.type}`} onClick={hasDetail ? onToggle : undefined}
+      style={{ cursor: hasDetail ? 'pointer' : 'default' }}>
+      <div className="trace-event-header">
+        <span className={`trace-tag ${ev.tag}`}>{ev.tag}</span>
+        <span style={{ color: 'var(--text)', fontSize: 11.5, flex: 1, minWidth: 0 }}>{ev.msg}</span>
+        {ev.latency && <span className="trace-latency">{ev.latency}</span>}
+        {hasDetail && (
+          <span style={{ fontSize: 10, color: 'var(--text-dim)', marginLeft: 4 }}>
+            {expanded ? '▲' : '▼'}
+          </span>
+        )}
+      </div>
+      {expanded && ev.detail && (
+        <pre style={{
+          marginTop: 6, fontSize: 10.5, color: 'var(--text-muted)',
+          background: 'var(--surface)', borderRadius: 3, padding: '6px 8px',
+          whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.5,
+          fontFamily: 'var(--font-mono)',
+        }}>
+          {ev.detail}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { AgentTrace });
+
+</script>
+
+<script type="text/babel">
+// === src/report-main.jsx ===
+// Report main area — MarkdownReport, CitationPopover, Tabs (Sources / Guardrails / Rubric / Versions)
+const { useState: useStateR, useRef: useRefR, useEffect: useEffectR, useCallback: useCbR } = React;
+
+// ─── Citation Popover ───────────────────────────────────────────────────────
+function CitationChip({ sourceId, sources, idx }) {
+  const [open, setOpen] = useStateR(false);
+  const ref = useRefR(null);
+  const src = sources.find(s => s.id === sourceId);
+
+  useEffectR(() => {
+    if (!open) return;
+    const close = e => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  const chipClass = `cite-chip${src?.verified === false ? ' unverified' : src?.verified ? ' verified' : ''}`;
+
+  return (
+    <span ref={ref} style={{ position: 'relative', display: 'inline' }}>
+      <span
+        className={chipClass}
+        tabIndex={0}
+        role="button"
+        aria-label={`Citation ${idx}${src ? ': ' + src.title : ''}`}
+        data-testid="open-citation-popover"
+        onClick={() => setOpen(p => !p)}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(p => !p); }}}
+      >
+        {idx}
+      </span>
+      {open && src && (
+        <div className="popover" style={{ bottom: '130%', left: '50%', transform: 'translateX(-50%)' }} role="tooltip">
+          <div className="popover-title">{src.title}</div>
+          <div className="popover-url">{src.url}</div>
+          {src.snippet && <div className="popover-snippet">"{src.snippet}"</div>}
+          <div className="popover-footer">
+            <Badge variant={src.verified ? 'verified' : 'unverified'}>
+              {src.verified ? '✓ Verified' : '⚠ Unverified'}
+            </Badge>
+            <a href={src.url} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>
+              Open <Icons.ExternalLink />
+            </a>
+          </div>
+        </div>
+      )}
+      {open && !src && (
+        <div className="popover" style={{ bottom: '130%', left: 0 }}>
+          <span style={{ color: 'var(--blocked)', fontSize: 12 }}>⚠ Source not found</span>
+        </div>
+      )}
+    </span>
+  );
+}
+
+// Build source index: source_id → display number
+function buildSourceIndex(report) {
+  const idx = {};
+  let n = 1;
+  report.sections.forEach(sec =>
+    sec.content.forEach(block => {
+      if (block.citations) block.citations.forEach(id => {
+        if (!idx[id]) idx[id] = n++;
+      });
+    })
+  );
+  return idx;
+}
+
+// ─── Report Content ─────────────────────────────────────────────────────────
+function ReportContent({ report, loading }) {
+  const sourceIdx = buildSourceIndex(report);
+
+  if (loading) return (
+    <div style={{ padding: '40px 32px', maxWidth: 740, margin: '0 auto' }}>
+      {[280, 180, 320, 240, 200].map((w, i) => (
+        <div key={i} className="skeleton" style={{ height: 16, width: `${w}px`, marginBottom: 14, maxWidth: '100%' }} />
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="report-content">
+      <h1 className="report-title">{report.title}</h1>
+
+      {/* Meta */}
+      <div className="report-meta">
+        <Badge variant="neutral" style={{ fontFamily: 'var(--font-mono)' }}>
+          {new Date(report.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+        </Badge>
+        <Badge variant="accent">{report.depth}</Badge>
+        <Badge variant="neutral">{report.sources.length} sources</Badge>
+        <Badge variant="verified">
+          {report.sources.filter(s => s.verified).length}/{report.sources.length} verified
+        </Badge>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', marginLeft: 4 }}>
+          #{report.id}
+        </span>
+      </div>
+
+      {/* Summary */}
+      <div className="report-summary">{report.summary}</div>
+
+      {/* Sections */}
+      {report.sections.map(sec => (
+        <div key={sec.id} className="report-section">
+          <h2>{sec.title}</h2>
+          {sec.content.map((block, bi) => (
+            <ReportBlock key={bi} block={block} sources={report.sources} sourceIdx={sourceIdx} />
+          ))}
+        </div>
+      ))}
+
+      {/* Footnotes */}
+      <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 24, marginTop: 8 }}>
+        <div style={{ fontSize: 11.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginBottom: 12 }}>
+          References
+        </div>
+        {Object.entries(sourceIdx).map(([sid, num]) => {
+          const src = report.sources.find(s => s.id === sid);
+          if (!src) return null;
+          return (
+            <div key={sid} style={{ display: 'flex', gap: 10, marginBottom: 7, alignItems: 'flex-start' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', width: 20, flexShrink: 0, paddingTop: 1 }}>[{num}]</span>
+              <div>
+                <a href={src.url} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'none', fontFamily: 'var(--font-serif)' }}>
+                  {src.title}
+                </a>
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: 1 }}>
+                  {src.domain} · {src.type}
+                  {!src.verified && <span style={{ color: 'var(--unverified)', marginLeft: 6 }}>⚠ unverified</span>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ReportBlock({ block, sources, sourceIdx }) {
+  const renderWithCitations = (text, cites) => {
+    if (!cites || cites.length === 0) return text;
+    return (
+      <>
+        {text}
+        {cites.map(sid => (
+          <CitationChip key={sid} sourceId={sid} sources={sources} idx={sourceIdx[sid] || '?'} />
+        ))}
+      </>
+    );
+  };
+
+  if (block.type === 'p') {
+    return <p>{renderWithCitations(block.text, block.citations)}</p>;
+  }
+  if (block.type === 'table') {
+    return (
+      <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+        <table>
+          <thead><tr>{block.headers.map(h => <th key={h}>{h}</th>)}</tr></thead>
+          <tbody>
+            {block.rows.map((row, i) => (
+              <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+  return null;
+}
+
+// ─── Sources Tab ─────────────────────────────────────────────────────────────
+function SourcesTab({ sources }) {
+  return (
+    <div className="sources-list">
+      {sources.map(src => (
+        <div key={src.id} className="source-item">
+          <div className="source-title">{src.title}</div>
+          <div className="source-url">{src.url}</div>
+          <div className="source-meta">
+            <Badge variant={src.verified ? 'verified' : 'unverified'}>
+              {src.verified ? '✓ Verified' : '⚠ Unverified'}
+            </Badge>
+            <Badge variant="neutral">{src.type}</Badge>
+            <span style={{ fontSize: 11.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{src.domain}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Guardrails Tab ─────────────────────────────────────────────────────────
+function GuardrailsTab({ guardrails }) {
+  const { unverified_claims, policy_violations, closure_violations } = guardrails;
+  return (
+    <div style={{ padding: 16 }}>
+      <Section label="Unverified Claims" count={unverified_claims.length} color="var(--unverified)">
+        {unverified_claims.length === 0
+          ? <EmptyItem label="All claims verified" />
+          : unverified_claims.map((g, i) => (
+            <div key={i} className="guardrail-item unverified">
+              <div className="guardrail-claim">{g.claim}</div>
+              <div className="guardrail-rationale">{g.rationale}</div>
+            </div>
+          ))}
+      </Section>
+      <Section label="Policy Violations" count={policy_violations.length} color="var(--blocked)">
+        {policy_violations.length === 0
+          ? <EmptyItem label="No policy violations" />
+          : policy_violations.map((g, i) => (
+            <div key={i} className="guardrail-item blocked">
+              <div className="guardrail-claim">{g.claim}</div>
+              <div className="guardrail-rationale">{g.rationale}</div>
+            </div>
+          ))}
+      </Section>
+      <Section label="Closure Violations" count={closure_violations.length} color="var(--unverified)">
+        {closure_violations.length === 0
+          ? <EmptyItem label="No closure violations" />
+          : closure_violations.map((g, i) => (
+            <div key={i} className="guardrail-item unverified">
+              <div className="guardrail-claim">{g.claim}</div>
+              <div className="guardrail-rationale">{g.rationale}</div>
+            </div>
+          ))}
+      </Section>
+    </div>
+  );
+}
+
+function Section({ label, count, color, children }) {
+  const [open, setOpen] = useStateR(true);
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <button onClick={() => setOpen(p => !p)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, width: '100%', textAlign: 'left' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>{label}</span>
+        <span style={{ fontSize: 11, background: 'var(--surface-raised)', borderRadius: 100, padding: '1px 7px', color }}>{count}</span>
+        <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-dim)' }}>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && children}
+    </div>
+  );
+}
+
+function EmptyItem({ label }) {
+  return (
+    <div className="guardrail-item ok">
+      <div style={{ fontSize: 13, color: 'var(--verified)', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Icons.Check /> {label}
+      </div>
+    </div>
+  );
+}
+
+// ─── Rubric Tab ───────────────────────────────────────────────────────────
+function RubricTab({ rubric }) {
+  return (
+    <div style={{ padding: 16 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>Critic Evaluation</div>
+      {Object.values(rubric).map(r => (
+        <div key={r.label} className="rubric-row">
+          <span className="rubric-label">{r.label}</span>
+          <div className="rubric-bar">
+            <div className="rubric-fill" style={{ width: `${(r.score / r.max) * 100}%`, background: r.score >= 4 ? 'var(--verified)' : r.score >= 3 ? 'var(--unverified)' : 'var(--blocked)' }} />
+          </div>
+          <span className="rubric-score">{r.score}/{r.max}</span>
+        </div>
+      ))}
+      <div style={{ marginTop: 16, padding: '10px 14px', background: 'var(--surface-raised)', borderRadius: 'var(--r)', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-muted)' }}>
+        Overall: <strong style={{ color: 'var(--text)' }}>4.4 / 5.0</strong>
+        <span style={{ marginLeft: 12, color: 'var(--verified)' }}>Accepted for finalization</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Version Diff ────────────────────────────────────────────────────────────
+function VersionsTab({ versions }) {
+  const [selA, setSelA] = useStateR('v2');
+  const [selB, setSelB] = useStateR('v3');
+
+  const v = (id) => versions.find(v => v.id === id);
+  const diffLines = [
+    { type: 'ctx',    text: '  …scaling laws predict smooth performance improvements across model sizes.' },
+    { type: 'remove', text: '- Emergent abilities are absent at smaller scales and appear sharply at exactly 100B parameters.' },
+    { type: 'add',    text: '+ Emergent abilities, as defined by Wei et al. (2022), are absent at smaller scales and' },
+    { type: 'add',    text: '+   appear approximately at scales beyond 50–100B parameters, though thresholds vary by task.' },
+    { type: 'ctx',    text: '  However, Schaeffer et al. (2023) argue that emergence may be an artifact…' },
+    { type: 'ctx',    text: '' },
+    { type: 'remove', text: '- The safety implications are clear and well-understood.' },
+    { type: 'add',    text: '+ From a safety perspective, emergent capabilities imply that scale-based risk assessments' },
+    { type: 'add',    text: '+   may be unreliable if capabilities appear discontinuously.' },
+  ];
+
+  return (
+    <div style={{ padding: 16 }}>
+      {/* Version selector */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>From</span>
+          <select value={selA} onChange={e => setSelA(e.target.value)}
+            style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 'var(--r)', padding: '5px 8px', fontSize: 12, flex: 1 }}>
+            {versions.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
+          </select>
+        </div>
+        <span style={{ color: 'var(--text-dim)', fontSize: 14 }}>→</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>To</span>
+          <select value={selB} onChange={e => setSelB(e.target.value)}
+            style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 'var(--r)', padding: '5px 8px', fontSize: 12, flex: 1 }}>
+            {versions.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {selA === selB ? (
+        <div className="empty-state"><div className="empty-msg">Select two different versions to compare</div></div>
+      ) : (
+        <>
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>{v(selB)?.summary_diff}</div>
+          </div>
+          <div style={{ background: 'var(--bg)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--r)', overflow: 'hidden' }}>
+            <div style={{ padding: '6px 12px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface)', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', display: 'flex', gap: 16 }}>
+              <span style={{ color: 'var(--blocked)' }}>― {v(selA)?.label}</span>
+              <span style={{ color: 'var(--verified)' }}>+ {v(selB)?.label}</span>
+            </div>
+            <div style={{ padding: '10px 0', maxHeight: 320, overflowY: 'auto' }}>
+              {diffLines.map((line, i) => (
+                <div key={i} className={line.type === 'add' ? 'diff-add' : line.type === 'remove' ? 'diff-remove' : ''}
+                  style={{ padding: '1px 14px', fontFamily: 'var(--font-mono)', fontSize: 11.5, lineHeight: 1.6,
+                    color: line.type === 'ctx' ? 'var(--text-dim)' : undefined,
+                    background: line.type === 'ctx' ? undefined : undefined,
+                  }}>
+                  {line.text || '\u00a0'}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Feedback Dialog ─────────────────────────────────────────────────────────
+function FeedbackDialog({ reportId, onClose, addToast }) {
+  const [comment, setComment] = useStateR('');
+  const [accepted, setAccepted] = useStateR(null);
+  const [submitting, setSubmitting] = useStateR(false);
+
+  const submit = () => {
+    if (accepted === null) return;
+    setSubmitting(true);
+    // Optimistic: close immediately, reconcile on failure
+    const optimisticClose = setTimeout(() => {
+      addToast('Feedback submitted — thank you!', 'success');
+      onClose();
+    }, 700);
+    // Simulate API call — replace with api.submitFeedback() in production
+    const shouldFail = false; // flip to test failure path
+    if (shouldFail) {
+      clearTimeout(optimisticClose);
+      setTimeout(() => {
+        setSubmitting(false);
+        // Reconcile: revert accepted state to null, surface error
+        setAccepted(null);
+        addToast('Submission failed — please try again', 'error');
+      }, 700);
+    }
+  };
+
+  return (
+    <Dialog title="Submit Feedback" onClose={onClose}
+      footer={
+        <>
+          <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
+          <Btn variant="primary" onClick={submit} disabled={accepted === null || submitting}
+            data-testid="send-feedback"
+            icon={submitting ? <Spinner size={13} color="#fff" /> : null}>
+            {submitting ? 'Submitting…' : 'Submit'}
+          </Btn>
+        </>
+      }>
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 10 }}>Did this report meet your needs?</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {[{ val: true, label: '👍  Accept', color: 'var(--verified)', bg: 'var(--verified-bg)' }, { val: false, label: '👎  Reject', color: 'var(--blocked)', bg: 'var(--blocked-bg)' }].map(opt => (
+            <button key={String(opt.val)} onClick={() => setAccepted(opt.val)}
+              style={{
+                flex: 1, padding: '9px 0', border: `1px solid ${accepted === opt.val ? opt.color : 'var(--border-subtle)'}`,
+                borderRadius: 'var(--r)', background: accepted === opt.val ? opt.bg : 'var(--surface-raised)',
+                color: accepted === opt.val ? opt.color : 'var(--text-muted)',
+                fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+              }}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Comments <span style={{ color: 'var(--text-dim)', fontWeight: 400 }}>(optional)</span></div>
+        <textarea value={comment} onChange={e => setComment(e.target.value)}
+          placeholder="What could be improved? Incorrect claims, missing sources, unclear sections…"
+          style={{ width: '100%', minHeight: 90, padding: '10px 12px', fontSize: 13, resize: 'vertical', borderRadius: 'var(--r)', lineHeight: 1.5 }} />
+      </div>
+    </Dialog>
+  );
+}
+
+Object.assign(window, { ReportContent, SourcesTab, GuardrailsTab, RubricTab, VersionsTab, FeedbackDialog });
+
+</script>
+
+<script type="text/babel">
+// === src/report.jsx ===
+// ReportPage — composes AgentTrace + ReportMain
+const { useState: useStateRP, useEffect: useEffectRP } = React;
+
+function ReportPage({ jobId, navigate }) {
+  const report = MOCK_REPORT; // In production: useSWR(`/reports/${jobId}`)
+  const [running, setRunning] = useStateRP(true);
+  const [traceComplete, setTraceComplete] = useStateRP(false);
+  const [activeTab, setActiveTab] = useStateRP('report');
+  const [showFeedback, setShowFeedback] = useStateRP(false);
+  const [selectedVersion, setSelectedVersion] = useStateRP('v3');
+  const [toasts, addToast] = useToasts();
+  const [rightTab, setRightTab] = useStateRP('sources');
+
+  // Simulate loading from localStorage persistence
+  useEffectRP(() => {
+    const key = `aethermind-report-${jobId}`;
+    const saved = localStorage.getItem(key);
+    if (saved === 'done') { setRunning(false); setTraceComplete(true); }
+    else {
+      localStorage.setItem(key, 'running');
+    }
+  }, [jobId]);
+
+  const onTraceComplete = () => {
+    setTraceComplete(true);
+    setRunning(false);
+    localStorage.setItem(`aethermind-report-${jobId}`, 'done');
+  };
+
+  const copyId = (val) => {
+    navigator.clipboard?.writeText(val).catch(() => {});
+    addToast(`Copied: ${val}`, 'success');
+  };
+
+  const tabs = [
+    { id: 'report',     label: 'Report' },
+    { id: 'sources',    label: 'Sources',    count: report.sources.length },
+    { id: 'guardrails', label: 'Guardrails', count: report.guardrails.unverified_claims.length + report.guardrails.closure_violations.length },
+    { id: 'rubric',     label: 'Rubric' },
+    { id: 'versions',   label: 'Versions',   count: report.versions.length },
+  ];
+
+  return (
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden', height: '100%' }}>
+
+      {/* Left: Agent Trace */}
+      <AgentTrace running={running} onComplete={onTraceComplete} />
+
+      {/* Right: Report content */}
+      <div className="report-main">
+        {/* Toolbar */}
+        <div className="report-toolbar">
+          <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* Version selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Version:</span>
+              <select
+                value={selectedVersion}
+                onChange={e => setSelectedVersion(e.target.value)}
+                style={{
+                  background: 'var(--surface-raised)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--r)',
+                  padding: '4px 8px',
+                  fontSize: 12, color: 'var(--text)', cursor: 'pointer',
+                }}>
+                {report.versions.map(v => (
+                  <option key={v.id} value={v.id}>{v.label}</option>
+                ))}
+              </select>
+            </div>
+            <Btn variant="secondary" size="sm" onClick={() => setShowFeedback(true)}
+              data-testid="open-feedback">
+              Feedback
+            </Btn>
+          </div>
+        </div>
+
+        {/* Status banner while streaming */}
+        {running && (
+          <div style={{
+            padding: '8px 20px',
+            background: 'var(--progress-bg)',
+            borderBottom: '1px solid var(--progress)',
+            display: 'flex', alignItems: 'center', gap: 10,
+            fontSize: 13, color: 'var(--progress)',
+            fontFamily: 'var(--font-mono)', flexShrink: 0,
+          }}>
+            <Spinner size={12} color="var(--progress)" />
+            Research in progress — report will update as sections are finalized
+          </div>
+        )}
+
+        {/* Tab content */}
+        <div className="report-body">
+          {activeTab === 'report'     && <ReportContent report={report} loading={running && !traceComplete} />}
+          {activeTab === 'sources'    && <SourcesTab sources={report.sources} />}
+          {activeTab === 'guardrails' && <GuardrailsTab guardrails={report.guardrails} />}
+          {activeTab === 'rubric'     && <RubricTab rubric={report.rubric} />}
+          {activeTab === 'versions'   && <VersionsTab versions={report.versions} />}
+        </div>
+
+        {/* Diagnostics footer */}
+        <div className="diagnostics-footer">
+          <span>Diagnostics</span>
+          <span style={{ color: 'var(--border)' }}>·</span>
+          <span>trace_id:</span>
+          <span
+            style={{ color: 'var(--accent)', cursor: 'pointer' }}
+            onClick={() => copyId(report.trace_id)}
+            title="Click to copy"
+          >{report.trace_id}</span>
+          <span style={{ color: 'var(--border)' }}>·</span>
+          <span>req:</span>
+          <span
+            style={{ color: 'var(--accent)', cursor: 'pointer' }}
+            onClick={() => copyId(report.request_id)}
+            title="Click to copy"
+          >{report.request_id}</span>
+          <span style={{ marginLeft: 'auto', color: 'var(--text-dim)' }}>
+            NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+          </span>
+        </div>
+      </div>
+
+      {/* Feedback dialog */}
+      {showFeedback && (
+        <FeedbackDialog
+          reportId={report.id}
+          onClose={() => setShowFeedback(false)}
+          addToast={addToast}
+        />
+      )}
+
+      <Toast toasts={toasts} />
+    </div>
+  );
+}
+
+Object.assign(window, { ReportPage });
+
+</script>
+
+<script type="text/babel">
+// === src/memory.jsx ===
+// Memory page — PreferencesTable, DomainListEditor, SemanticSearchPanel
+const { useState: useStateM, useRef: useRefM, useEffect: useEffectM } = React;
+
+function MemoryPage() {
+  const [toasts, addToast] = useToasts();
+  const [activeTab, setActiveTab] = useStateM('preferences');
+
+  const tabs = [
+    { id: 'preferences', label: 'Preferences' },
+    { id: 'domains',     label: 'Domain Lists' },
+    { id: 'search',      label: 'Semantic Search' },
+  ];
+
+  return (
+    <div className="memory-page">
+      <div className="memory-inner">
+        <div style={{ marginBottom: 28 }}>
+          <h1 className="memory-heading">Memory & Preferences</h1>
+          <p className="memory-sub">
+            Manage persistent preferences, domain allow/deny lists, and search past research.
+            Deny-list takes precedence over allow-list.
+          </p>
+          <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+        </div>
+
+        {activeTab === 'preferences' && <PreferencesPanel addToast={addToast} />}
+        {activeTab === 'domains'     && <DomainsPanel addToast={addToast} />}
+        {activeTab === 'search'      && <SemanticSearchPanel />}
+      </div>
+      <Toast toasts={toasts} />
+    </div>
+  );
+}
+
+// ─── Preferences ─────────────────────────────────────────────────────────────
+function PreferencesPanel({ addToast }) {
+  const [prefs, setPrefs] = useStateM([...MOCK_PREFERENCES]);
+  const [editingKey, setEditingKey] = useStateM(null);
+  const [editVal, setEditVal] = useStateM('');
+  const [newKey, setNewKey] = useStateM('');
+  const [newVal, setNewVal] = useStateM('');
+  const [adding, setAdding] = useStateM(false);
+
+  const startEdit = (p) => { setEditingKey(p.key); setEditVal(p.value); };
+  const saveEdit = (key) => {
+    setPrefs(p => p.map(pf => pf.key === key ? { ...pf, value: editVal, updatedAt: new Date().toISOString().slice(0,10), source: 'user' } : pf));
+    setEditingKey(null);
+    addToast('Preference saved', 'success');
+  };
+  const del = (key) => {
+    setPrefs(p => p.filter(pf => pf.key !== key));
+    addToast('Preference deleted', 'success');
+  };
+  const addPref = () => {
+    if (!newKey.trim() || !newVal.trim()) return;
+    if (prefs.find(p => p.key === newKey.trim())) { addToast('Key already exists', 'error'); return; }
+    setPrefs(p => [...p, { key: newKey.trim(), value: newVal.trim(), source: 'user', updatedAt: new Date().toISOString().slice(0,10) }]);
+    setNewKey(''); setNewVal(''); setAdding(false);
+    addToast('Preference added', 'success');
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          {prefs.length} preferences
+        </div>
+        <Btn variant="secondary" size="sm" icon={<Icons.Plus />}
+          onClick={() => setAdding(p => !p)} data-testid="preference-save">
+          Add
+        </Btn>
+      </div>
+
+      {adding && (
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--accent-subtle)', borderRadius: 'var(--r-lg)', padding: 14, marginBottom: 14, display: 'flex', gap: 8, alignItems: 'center', animation: 'fadeIn 0.15s ease' }}>
+          <input type="text" placeholder="key" value={newKey} onChange={e => setNewKey(e.target.value)}
+            style={{ flex: 1, padding: '7px 10px', fontSize: 13, fontFamily: 'var(--font-mono)' }} />
+          <input type="text" placeholder="value" value={newVal} onChange={e => setNewVal(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addPref()}
+            style={{ flex: 2, padding: '7px 10px', fontSize: 13 }} />
+          <Btn variant="primary" size="sm" onClick={addPref} icon={<Icons.Check />}>Save</Btn>
+          <Btn variant="ghost" size="sm" onClick={() => setAdding(false)}>Cancel</Btn>
+        </div>
+      )}
+
+      <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+        <table className="pref-table">
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Value</th>
+              <th>Source</th>
+              <th>Updated</th>
+              <th style={{ width: 80 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {prefs.map(p => (
+              <tr key={p.key}>
+                <td className="pref-key">{p.key}</td>
+                <td>
+                  {editingKey === p.key
+                    ? <div style={{ display: 'flex', gap: 6 }}>
+                        <input type="text" value={editVal} onChange={e => setEditVal(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') saveEdit(p.key); if (e.key === 'Escape') setEditingKey(null); }}
+                          autoFocus
+                          style={{ flex: 1, padding: '4px 8px', fontSize: 13, borderRadius: 'var(--r-sm)' }} />
+                        <Btn variant="primary" size="sm" onClick={() => saveEdit(p.key)}><Icons.Check /></Btn>
+                      </div>
+                    : <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--text)' }}>{p.value}</span>
+                  }
+                </td>
+                <td>
+                  <span className="pref-source" style={{ color: p.source === 'inferred' ? 'var(--unverified)' : 'var(--text-muted)' }}>
+                    {p.source === 'inferred' ? '◈ inferred' : '● user'}
+                  </span>
+                </td>
+                <td><span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--text-dim)' }}>{p.updatedAt}</span></td>
+                <td>
+                  <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                    <Btn variant="ghost" size="sm" onClick={() => startEdit(p)} aria-label={`Edit ${p.key}`}><Icons.Edit /></Btn>
+                    <Btn variant="ghost" size="sm" onClick={() => del(p.key)} aria-label={`Delete ${p.key}`}
+                      style={{ color: 'var(--blocked)' }}><Icons.Trash /></Btn>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+        <span style={{ color: 'var(--unverified)' }}>◈ inferred</span> = derived from usage patterns · <span>● user</span> = explicitly set
+      </div>
+    </div>
+  );
+}
+
+// ─── Domain Lists ──────────────────────────────────────────────────────────
+function DomainsPanel({ addToast }) {
+  const [allow, setAllow] = useStateM([...MOCK_ALLOW_DOMAINS]);
+  const [deny,  setDeny]  = useStateM([...MOCK_DENY_DOMAINS]);
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <DomainList
+        label="Allow Domains"
+        sublabel="Sources in this list are preferred. Leave empty to allow all."
+        variant="verified"
+        domains={allow}
+        setDomains={setAllow}
+        addToast={addToast}
+        emptyMsg="No domain preferences — all sources allowed"
+      />
+      <DomainList
+        label="Deny Domains"
+        sublabel="Sources in this list are never used. Deny wins over allow."
+        variant="blocked"
+        domains={deny}
+        setDomains={setDeny}
+        addToast={addToast}
+        emptyMsg="No domains blocked"
+      />
+    </div>
+  );
+}
+
+function DomainList({ label, sublabel, variant, domains, setDomains, addToast, emptyMsg }) {
+  const [input, setInput] = useStateM('');
+  const accentColor = variant === 'verified' ? 'var(--verified)' : 'var(--blocked)';
+  const bgColor     = variant === 'verified' ? 'var(--verified-bg)' : 'var(--blocked-bg)';
+
+  const add = () => {
+    const v = input.trim().replace(/^https?:\/\//, '').split('/')[0];
+    if (!v) return;
+    // Basic hostname validation
+    if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v)) { addToast('Invalid hostname pattern', 'error'); return; }
+    if (domains.includes(v)) { addToast('Already in list', 'error'); return; }
+    setDomains(p => [...p, v]);
+    setInput('');
+    addToast(`Added to ${label.toLowerCase()}`, 'success');
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: accentColor, marginBottom: 3 }}>{label}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sublabel}</div>
+      </div>
+      <div style={{ display: 'flex', gap: 7, marginBottom: 12 }}>
+        <input type="text" value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add(); }}}
+          placeholder="e.g. nature.com"
+          data-testid="domain-list-add"
+          style={{ flex: 1, padding: '7px 10px', fontSize: 13 }} />
+        <Btn variant="secondary" size="sm" icon={<Icons.Plus />} onClick={add}>Add</Btn>
+      </div>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--r-lg)', padding: 12, minHeight: 80 }}>
+        {domains.length === 0
+          ? <div style={{ fontSize: 12.5, color: 'var(--text-dim)', textAlign: 'center', padding: '16px 0' }}>{emptyMsg}</div>
+          : domains.map(d => (
+            <div key={d} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 8px', borderRadius: 'var(--r-sm)', background: bgColor, marginBottom: 5 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: accentColor }}>{d}</span>
+              <button onClick={() => { setDomains(p => p.filter(x => x !== d)); addToast('Removed', 'success'); }}
+                style={{ background: 'none', border: 'none', color: accentColor, cursor: 'pointer', fontSize: 14, padding: '0 2px', opacity: 0.7, lineHeight: 1 }}
+                aria-label={`Remove ${d}`}>×</button>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+// ─── Semantic Search ──────────────────────────────────────────────────────────
+function SemanticSearchPanel() {
+  const [query, setQuery] = useStateM('');
+  const [results, setResults] = useStateM(null);
+  const [loading, setLoading] = useStateM(false);
+
+  const search = () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setTimeout(() => {
+      setResults(MOCK_SEMANTIC_RESULTS.filter(r =>
+        r.title.toLowerCase().includes(query.toLowerCase()) ||
+        r.snippet.toLowerCase().includes(query.toLowerCase()) ||
+        query.toLowerCase().split(' ').some(w => r.title.toLowerCase().includes(w) || r.snippet.toLowerCase().includes(w))
+      ).length > 0
+        ? MOCK_SEMANTIC_RESULTS
+        : []
+      );
+      setLoading(false);
+    }, 600);
+  };
+
+  return (
+    <div className="search-panel">
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 5 }}>Search Past Research</div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14 }}>
+          Semantic search over reports and preference embeddings stored in Chroma.
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <input
+              type="search"
+              className="search-input"
+              placeholder="e.g. attention mechanisms, scaling laws, emergent behavior…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && search()}
+            />
+          </div>
+          <Btn variant="primary" onClick={search} disabled={loading || !query.trim()}
+            icon={loading ? <Spinner size={13} color="#fff" /> : <Icons.Search />}>
+            {loading ? 'Searching…' : 'Search'}
+          </Btn>
+        </div>
+      </div>
+
+      {results === null && (
+        <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-dim)' }}>
+          <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.3 }}>◈</div>
+          <div style={{ fontSize: 13 }}>Search your research memory</div>
+          <div style={{ fontSize: 12, marginTop: 4, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+            GET /memory/search?q=…
+          </div>
+        </div>
+      )}
+
+      {results !== null && results.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-dim)', fontSize: 13 }}>
+          No results found for "{query}"
+        </div>
+      )}
+
+      {results && results.length > 0 && (
+        <div>
+          <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', marginBottom: 10 }}>
+            {results.length} results · ranked by semantic similarity
+          </div>
+          {results.map(r => (
+            <div key={r.id} className="search-result">
+              <div className="search-result-title">{r.title}</div>
+              <div className="search-result-snippet">{r.snippet}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                <span className="search-score">score: {r.score.toFixed(2)}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>{r.date}</span>
+                <div style={{ marginLeft: 'auto', height: 4, width: 60, background: 'var(--surface-raised)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${r.score * 100}%`, background: 'var(--accent)', borderRadius: 2 }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { MemoryPage });
+
+</script>
+
+<script type="text/babel">
+// === src/app.jsx ===
+// App root + hash router
+const { useState: useStateApp, useEffect: useEffectApp } = React;
+
+function App() {
+  const getRoute = () => {
+    const h = window.location.hash.replace('#', '') || '/';
+    return h;
+  };
+
+  const [route, setRoute] = useStateApp(getRoute);
+
+  // Theme
+  const [dark, setDark] = useStateApp(() => {
+    const saved = localStorage.getItem('aethermind-theme');
+    return saved ? saved === 'dark' : true;
+  });
+  useEffectApp(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    localStorage.setItem('aethermind-theme', dark ? 'dark' : 'light');
+  }, [dark]);
+  const onToggleTheme = () => setDark(d => !d);
+
+  useEffectApp(() => {
+    const onHash = () => setRoute(getRoute());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  const navigate = (path) => {
+    window.location.hash = path;
+    setRoute(path);
+    if (path.startsWith('/reports/')) {
+      localStorage.setItem('aethermind-last-report', path.replace('/reports/', ''));
+    }
+  };
+
+  // Restore last route from localStorage
+  useEffectApp(() => {
+    const saved = localStorage.getItem('aethermind-last-route');
+    if (saved && saved !== '/' && window.location.hash === '') {
+      navigate(saved);
+    }
+  }, []);
+
+  useEffectApp(() => {
+    localStorage.setItem('aethermind-last-route', route);
+  }, [route]);
+
+  const renderPage = () => {
+    if (route === '/') return <HomePage navigate={navigate} />;
+    if (route === '/memory') return <MemoryPage />;
+    if (route.startsWith('/reports/')) {
+      const id = route.replace('/reports/', '');
+      return <ReportPage jobId={id} navigate={navigate} />;
+    }
+    // 404
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
+        <div style={{ fontSize: 48, opacity: 0.15, fontFamily: 'var(--font-serif)' }}>404</div>
+        <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Page not found</div>
+        <Btn variant="secondary" onClick={() => navigate('/')}>Back to Home</Btn>
+      </div>
+    );
+  };
+
+  return (
+    <AppShell route={route} navigate={navigate} dark={dark} onToggleTheme={onToggleTheme}>
+      {renderPage()}
+    </AppShell>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+
+</script>
+
+</body>
+</html>

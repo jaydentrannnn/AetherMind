@@ -9,16 +9,23 @@ Concise guidance for working in this repository.
 AetherMind is an agentic research/report generator.  
 Source of truth plan: `.cursor/plans/aethermind_research_agent_plan_2dc943b3.plan.md`.
 
-**Current status:** Phase 6 (`guardrails + memory_service`) implemented.
+**Current status:** Phase 8 close-out implemented (Phase 7 endpoints + Phase 8 UI verification complete).
 - `backend/app/agent/graph.py` — compiled `StateGraph` with `SqliteSaver` checkpointer
 - `backend/app/agent/state.py` — `AgentState` TypedDict with annotated reducers (`reduce_findings`, `reduce_sources`)
 - `backend/app/agent/nodes/` — `planner`, `researcher`, `synthesizer`, `guardrails`, `critic`, `memory_writer` nodes
 - `backend/app/agent/prompts/` — Jinja2 templates (`planner.j2`, `researcher.j2`, `synthesizer.j2`, `critic.j2`) rendered via `render.py`
 - `backend/app/memory/` — hybrid memory service (`service.py`, `sqlite_store.py`, `vector_store.py`)
 - `backend/app/guardrails/` — source policy + citation verifier modules
-- Tests include Phase 6 coverage (`test_memory_service.py`, `test_citation_verifier.py`, `test_source_policy.py`)
+- `backend/app/api/` — implemented endpoints + adapters:
+  - `research.py` (`POST /research`, `GET /research/{id}/stream`)
+  - `reports.py` (`GET /reports/{id}`, `GET /reports/{id}/versions`)
+  - `feedback.py` (`POST /feedback`)
+  - `memory.py` (`GET/POST /memory/preferences`, `GET /memory/search`)
+  - `jobs.py` (in-process job manager with SSE queue + fallback driver)
+  - `transforms.py` (backend -> frontend response mapping)
+- Tests include API coverage (`test_api_research.py`, `test_api_reports.py`, `test_api_feedback.py`, `test_api_memory.py`) in addition to phase 6 tests.
 
-**Next phase:** `fastapi_endpoints`.
+**Next phase:** `eval_harness` / `observability` hardening.
 
 ## Coding Behavior
 
@@ -56,6 +63,66 @@ npm run lint
 # Full stack
 docker-compose up --build   # api + frontend + chroma
 docker-compose up chroma    # vector store only
+```
+
+## Phase 7/8 Functional Test Commands
+
+Run these in order to validate all newly implemented behavior:
+
+```bash
+# 1) Backend regression + new API tests
+cd backend
+pytest tests/ -x
+
+# 2) Start API locally
+cd backend
+uv run fastapi dev app/main.py
+```
+
+In a second terminal:
+
+```bash
+# 3) Create a research job
+curl -s -X POST "http://127.0.0.1:8000/research" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"topic\":\"Test Phase 7 endpoint wiring\"}"
+```
+
+Copy `job_id` from output, then:
+
+```bash
+# 4) Stream SSE events for that job
+curl -N "http://127.0.0.1:8000/research/<job_id>/stream"
+
+# 5) Fetch report + versions
+curl -s "http://127.0.0.1:8000/reports/<job_id>"
+curl -s "http://127.0.0.1:8000/reports/<job_id>/versions"
+
+# 6) Memory endpoints
+curl -s "http://127.0.0.1:8000/memory/preferences"
+curl -s -X POST "http://127.0.0.1:8000/memory/preferences" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"preferences\":[{\"key\":\"tone\",\"value\":\"concise\",\"source\":\"user\",\"updatedAt\":\"2026-04-22T00:00:00Z\"}],\"allow_domains\":[\"arxiv.org\"],\"deny_domains\":[\"spam.example\"]}"
+curl -s "http://127.0.0.1:8000/memory/search?q=transformer"
+```
+
+To test feedback, use report id returned by `/reports/<job_id>`:
+
+```bash
+# 7) Feedback endpoint
+curl -s -X POST "http://127.0.0.1:8000/feedback" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"report_id\":\"<report_id>\",\"accepted\":true,\"user_comment\":\"Looks good\"}"
+```
+
+Frontend validation:
+
+```bash
+# 8) Frontend quality gates + e2e
+cd frontend
+npm run lint
+npm run build
+npx playwright test
 ```
 
 ## Architecture

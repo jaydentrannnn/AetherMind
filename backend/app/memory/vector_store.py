@@ -2,10 +2,113 @@
 
 from __future__ import annotations
 
-from chromadb import PersistentClient
+try:
+    from chromadb import PersistentClient
+except ImportError:  # pragma: no cover - used in minimal local test envs
+    PersistentClient = None
 
 from app.config import settings
 from app.embeddings.client import EmbeddingClient, get_embedding_client
+
+
+class _InMemoryCollection:
+    """Small in-memory collection implementing the subset of Chroma API we use."""
+
+    def __init__(self) -> None:
+        """Initialize internal row storage keyed by id."""
+        self._rows: dict[str, dict] = {}
+
+    def upsert(
+        self,
+        *,
+        ids: list[str],
+        documents: list[str],
+        embeddings: list[list[float]],
+        metadatas: list[dict],
+    ) -> None:
+        """Insert or replace rows for the provided ids."""
+        for idx, item_id in enumerate(ids):
+            self._rows[item_id] = {
+                "id": item_id,
+                "document": documents[idx] if idx < len(documents) else "",
+                "embedding": embeddings[idx] if idx < len(embeddings) else [],
+                "metadata": metadatas[idx] if idx < len(metadatas) else {},
+            }
+
+    def query(
+        self,
+        *,
+        query_embeddings: list[list[float]],
+        n_results: int,
+        include: list[str],
+        where: dict | None = None,
+    ) -> dict:
+        """Return a Chroma-like payload using naive L2 distance ranking."""
+        del include
+        query = query_embeddings[0] if query_embeddings else []
+        rows = list(self._rows.values())
+        if where:
+            rows = [
+                row
+                for row in rows
+                if all(row["metadata"].get(key) == value for key, value in where.items())
+            ]
+        ranked = sorted(rows, key=lambda row: _l2_distance(query, row["embedding"]))[:n_results]
+        return {
+            "ids": [[row["id"] for row in ranked]],
+            "documents": [[row["document"] for row in ranked]],
+            "metadatas": [[row["metadata"] for row in ranked]],
+            "distances": [[_l2_distance(query, row["embedding"]) for row in ranked]],
+        }
+
+    def delete(self, *, where: dict) -> None:
+        """Delete rows whose metadata fully matches the provided predicate."""
+        to_remove = [
+            row_id
+            for row_id, row in self._rows.items()
+            if all(row["metadata"].get(key) == value for key, value in where.items())
+        ]
+        for row_id in to_remove:
+            self._rows.pop(row_id, None)
+
+
+class _InMemoryClient:
+    """Provide get_or_create_collection with in-memory collection instances."""
+
+    def __init__(self) -> None:
+        """Initialize collection dictionary for fallback persistence."""
+        self._collections: dict[str, _InMemoryCollection] = {}
+
+    def get_or_create_collection(self, *, name: str, embedding_function=None) -> _InMemoryCollection:
+        """Return a reusable in-memory collection for a name."""
+        del embedding_function
+        if name not in self._collections:
+            self._collections[name] = _InMemoryCollection()
+        return self._collections[name]
+
+
+def _l2_distance(left: list[float], right: list[float]) -> float:
+    """Compute squared L2 distance between two vectors of equal length."""
+    if not left or not right or len(left) != len(right):
+        return 1.0
+    return sum((l - r) ** 2 for l, r in zip(left, right))
+
+
+class _HashEmbedder:
+    """Dependency-free fallback embedder for local tests/dev without ML stacks."""
+
+    dim = 8
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Embed each text into a deterministic low-dimensional vector."""
+        return [await self.embed_one(text) for text in texts]
+
+    async def embed_one(self, text: str) -> list[float]:
+        """Convert one text string into a deterministic numeric vector."""
+        buckets = [0.0] * self.dim
+        for idx, char in enumerate(text):
+            buckets[idx % self.dim] += (ord(char) % 31) / 31.0
+        return buckets
 
 
 class VectorStore:
@@ -18,8 +121,17 @@ class VectorStore:
         persist_dir: str | None = None,
     ) -> None:
         """Initialize the persistent client and three named collections."""
-        self._embedder = embedder or get_embedding_client()
-        self._client = PersistentClient(path=persist_dir or settings.CHROMA_PERSIST_DIR)
+        if embedder is None:
+            try:
+                self._embedder = get_embedding_client()
+            except Exception:
+                self._embedder = _HashEmbedder()
+        else:
+            self._embedder = embedder
+        if PersistentClient is None:
+            self._client = _InMemoryClient()
+        else:
+            self._client = PersistentClient(path=persist_dir or settings.CHROMA_PERSIST_DIR)
         # Embeddings are precomputed through app.embeddings; keep Chroma passive here.
         self._preferences = self._client.get_or_create_collection(
             name=settings.CHROMA_COLLECTION_PREFERENCES,

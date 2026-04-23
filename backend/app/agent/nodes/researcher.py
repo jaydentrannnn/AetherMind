@@ -8,18 +8,13 @@ from typing import Any
 from app.agent.prompts.render import renderer
 from app.agent.state import AgentState
 from app.schemas import Finding, ToolResult
-from app.tools import (
-    ArxivSearchTool,
-    BaseTool,
-    FetchUrlTool,
-    PdfLoaderTool,
-    SourceRegistry,
-    WebSearchTool,
-)
+from app.tools.base import BaseTool, SourceRegistry
 
 
 def _build_tool_catalog(source_registry: SourceRegistry) -> dict[str, BaseTool]:
     """Create a tool-name to tool-instance mapping for one researcher run."""
+    from app.tools import ArxivSearchTool, FetchUrlTool, PdfLoaderTool, WebSearchTool
+
     return {
         "web_search": WebSearchTool(source_registry=source_registry),
         "arxiv_search": ArxivSearchTool(source_registry=source_registry),

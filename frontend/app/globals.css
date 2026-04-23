@@ -4,73 +4,171 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --bg: oklch(0.11 0.012 255);
+    --surface: oklch(0.155 0.013 255);
+    --surface-raised: oklch(0.195 0.013 255);
+    --surface-hover: oklch(0.22 0.013 255);
+    --border-token: oklch(0.27 0.016 255);
+    --border-subtle: oklch(0.205 0.012 255);
+    --text: oklch(0.93 0.008 80);
+    --text-muted: oklch(0.58 0.018 255);
+    --text-dim: oklch(0.38 0.012 255);
+    --accent-token: oklch(0.65 0.19 240);
+    --accent-hover: oklch(0.72 0.19 240);
+    --accent-subtle: oklch(0.65 0.07 240);
+    --accent-bg: oklch(0.18 0.05 240);
+    --verified: oklch(0.73 0.16 155);
+    --verified-bg: oklch(0.15 0.04 155);
+    --unverified: oklch(0.8 0.13 80);
+    --unverified-bg: oklch(0.18 0.05 80);
+    --blocked: oklch(0.67 0.19 25);
+    --blocked-bg: oklch(0.16 0.05 25);
+    --progress: oklch(0.73 0.15 200);
+    --progress-bg: oklch(0.15 0.04 200);
+    --font-ui: "IBM Plex Sans", system-ui, sans-serif;
+    --font-serif: "IBM Plex Serif", Georgia, serif;
+    --font-mono: "IBM Plex Mono", monospace;
+    --r-sm: 0.2rem;
+    --r: 0.35rem;
+    --r-lg: 0.6rem;
+    --nav-h: 52px;
+    --trace-w: 336px;
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.4);
+    --shadow: 0 4px 16px rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 12px 40px rgb(0 0 0 / 0.6);
     --radius: 0.5rem;
-  }
 
-  .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+  }
+
+  html[data-theme="light"] {
+    --bg: oklch(0.975 0.004 240);
+    --surface: oklch(0.995 0.002 240);
+    --surface-raised: oklch(0.945 0.007 240);
+    --surface-hover: oklch(0.925 0.009 240);
+    --border-token: oklch(0.82 0.012 240);
+    --border-subtle: oklch(0.88 0.008 240);
+    --text: oklch(0.16 0.015 255);
+    --text-muted: oklch(0.44 0.018 255);
+    --text-dim: oklch(0.62 0.012 255);
+    --accent-token: oklch(0.5 0.19 240);
+    --accent-hover: oklch(0.43 0.19 240);
+    --accent-subtle: oklch(0.5 0.09 240);
+    --accent-bg: oklch(0.93 0.05 240);
+    --verified: oklch(0.45 0.16 155);
+    --verified-bg: oklch(0.93 0.06 155);
+    --unverified: oklch(0.52 0.13 80);
+    --unverified-bg: oklch(0.95 0.05 80);
+    --blocked: oklch(0.5 0.19 25);
+    --blocked-bg: oklch(0.95 0.06 25);
+    --progress: oklch(0.48 0.15 200);
+    --progress-bg: oklch(0.93 0.05 200);
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.08);
+    --shadow: 0 4px 16px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 12px 40px rgb(0 0 0 / 0.14);
+
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
   }
   body {
     @apply bg-background text-foreground;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-family: var(--font-ui);
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .badge {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs;
+  }
+
+  .badge-verified {
+    background: var(--verified-bg);
+    color: var(--verified);
+  }
+
+  .badge-unverified {
+    background: var(--unverified-bg);
+    color: var(--unverified);
+  }
+
+  .badge-blocked {
+    background: var(--blocked-bg);
+    color: var(--blocked);
+  }
+
+  .badge-progress {
+    background: var(--progress-bg);
+    color: var(--progress);
+  }
+
+  .badge-neutral {
+    background: var(--surface-raised);
+    color: var(--text-muted);
+  }
+
+  .card-surface {
+    @apply rounded-lg border p-4;
+    background: var(--surface);
+    border-color: var(--border-subtle);
+  }
+
+  .btn-accent {
+    background: var(--accent-token);
+    color: white;
+  }
+
+  .btn-accent:hover {
+    background: var(--accent-hover);
   }
 }
