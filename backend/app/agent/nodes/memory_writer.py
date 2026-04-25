@@ -20,6 +20,7 @@ async def memory_writer_node(state: AgentState) -> AgentState:
             "guardrail_report": state.get("guardrail_report"),
             "feedback": state.get("feedback"),
             "approved": state.get("approved", False),
+            "depth": state.get("depth", "standard"),
         }
     )
     return {}

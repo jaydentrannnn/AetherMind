@@ -109,6 +109,14 @@ const KNOWN_TYPES = new Set<SSEEventType>([
   'guardrails', 'critic', 'revision', 'memory', 'done', 'error',
 ]);
 
+function isAbortLikeError(err: unknown): boolean {
+  if (err instanceof DOMException && err.name === 'AbortError') return true;
+  if (typeof err !== 'object' || err === null) return false;
+  const name = 'name' in err ? String(err.name) : '';
+  const message = 'message' in err ? String(err.message) : '';
+  return name === 'AbortError' || /abort/i.test(message);
+}
+
 function parseEnvelope(raw: string): SSEEnvelope | null {
   try {
     const parsed = JSON.parse(raw);
@@ -149,7 +157,14 @@ async function* readSSELines(
 
   try {
     while (!signal.aborted) {
-      const { done, value } = await reader.read();
+      let done = false;
+      let value: Uint8Array | undefined;
+      try {
+        ({ done, value } = await reader.read());
+      } catch (err: unknown) {
+        if (signal.aborted || isAbortLikeError(err)) break;
+        throw err;
+      }
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
@@ -164,7 +179,13 @@ async function* readSSELines(
       }
     }
   } finally {
-    reader.cancel();
+    try {
+      await reader.cancel();
+    } catch (err: unknown) {
+      if (!signal.aborted && !isAbortLikeError(err)) {
+        console.warn('[sse] Failed to cancel stream reader:', err);
+      }
+    }
   }
 }
 
@@ -248,8 +269,7 @@ export function subscribeToJobStream(
     } catch (err: unknown) {
       if (signal.aborted || cancelled) return;
 
-      const isAbort = err instanceof DOMException && err.name === 'AbortError';
-      if (isAbort) return;
+      if (isAbortLikeError(err)) return;
 
       console.warn(`[sse] Connection error (attempt ${attempt}):`, err);
 
@@ -292,13 +312,17 @@ export function useJobStream(jobId: string | null): { state: AgentTraceState } {
     if (!jobId) return;
 
     setState(initialTraceState);
-    abortRef.current = new AbortController();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-    const unsub = subscribeToJobStream(jobId, abortRef.current.signal, setState);
+    const unsub = subscribeToJobStream(jobId, controller.signal, setState);
 
     return () => {
-      abortRef.current?.abort();
       unsub();
+      controller.abort();
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
     };
   }, [jobId]);
 

@@ -18,12 +18,12 @@ async def guardrails_node(state: AgentState, *, llm_router: Router | None = None
     memory_context = state.get("memory_context", {})
     allow_domains = memory_context.get("allow_domains", [])
     deny_domains = memory_context.get("deny_domains", [])
-    _, policy_violations = SourcePolicy.filter_sources(
+    allowed_sources, policy_violations = SourcePolicy.filter_sources(
         state.get("sources", []),
         allow_domains,
         deny_domains,
     )
     verifier = CitationVerifier(llm_router=llm_router)
-    report = await verifier.verify(draft, state.get("sources", []))
+    report = await verifier.verify(draft, allowed_sources)
     report.policy_violations = policy_violations
-    return {"guardrail_report": report, "draft": draft}
+    return {"guardrail_report": report, "draft": draft, "filtered_sources": allowed_sources}

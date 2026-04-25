@@ -6,12 +6,13 @@ import asyncio
 import json
 import time
 import uuid
-from collections import defaultdict, deque
+from collections import deque
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
 
+from app.agent.depth import DepthLevel, normalize_depth
 from app import db
 from app.config import settings
 from app.memory import sqlite_store
@@ -39,10 +40,10 @@ def _event_type(node_name: str) -> str:
 
 @dataclass
 class JobRuntime:
-    """Track queue, replay buffer, and execution task for one job id."""
+    """Track per-subscriber queues, replay buffer, and execution task for one job id."""
 
-    queue: asyncio.Queue[str] = field(default_factory=asyncio.Queue)
     replay: deque[str] = field(default_factory=lambda: deque(maxlen=200))
+    subscribers: set[asyncio.Queue[str]] = field(default_factory=set)
     task: asyncio.Task[None] | None = None
 
 
@@ -56,8 +57,11 @@ class JobManager:
 
     async def start(self, topic: str, options: dict[str, Any] | None, user_id: str | None) -> str:
         """Create one ResearchJob row and schedule async execution."""
-        del options
         job_id = str(uuid.uuid4())
+        resolved_options = options or {}
+        resolved_depth = normalize_depth(
+            resolved_options.get("depth") if isinstance(resolved_options, dict) else None
+        )
         resolved_user_id = user_id or sqlite_store.ensure_default_user()
         with db.SessionLocal() as session:
             session.add(
@@ -72,50 +76,76 @@ class JobManager:
 
         async with self._lock:
             runtime = self._jobs.setdefault(job_id, JobRuntime())
-            runtime.task = asyncio.create_task(self._run(job_id=job_id, topic=topic))
+            runtime.task = asyncio.create_task(
+                self._run(
+                    job_id=job_id,
+                    topic=topic,
+                    depth=resolved_depth,
+                    user_id=resolved_user_id,
+                )
+            )
         return job_id
 
     async def subscribe(self, job_id: str) -> AsyncIterator[str]:
-        """Yield SSE lines for a job, replaying buffered events first."""
+        """Yield SSE lines for a job, replaying buffered events then live events."""
         runtime = self._jobs.setdefault(job_id, JobRuntime())
+        q: asyncio.Queue[str] = asyncio.Queue()
         for item in runtime.replay:
-            yield item
-        while True:
-            item = await runtime.queue.get()
-            yield item
-            if item == _format_sse("[DONE]"):
-                return
+            await q.put(item)
+        runtime.subscribers.add(q)
+        try:
+            while True:
+                item = await q.get()
+                yield item
+                if item == _format_sse("[DONE]"):
+                    return
+        finally:
+            runtime.subscribers.discard(q)
 
     async def _emit(self, job_id: str, payload: dict[str, Any] | str) -> None:
-        """Publish one payload to queue and replay buffer for subscribers."""
+        """Publish one payload to all subscriber queues and the replay buffer."""
         runtime = self._jobs.setdefault(job_id, JobRuntime())
-        serialized = payload if isinstance(payload, str) else json.dumps(payload)
-        line = _format_sse(serialized)
+        line = _format_sse(payload if isinstance(payload, str) else json.dumps(payload))
         runtime.replay.append(line)
-        await runtime.queue.put(line)
+        for q in list(runtime.subscribers):
+            await q.put(line)
 
     def _supports_real_driver(self) -> bool:
         """Return whether required model settings are present for real execution."""
         return bool(settings.MODEL_PLANNER and settings.MODEL_SYNTH)
 
-    async def _run(self, *, job_id: str, topic: str) -> None:
+    async def _run(self, *, job_id: str, topic: str, depth: DepthLevel, user_id: str) -> None:
         """Execute one job via real graph driver or deterministic fallback."""
+        failed = False
         try:
             if self._supports_real_driver():
-                await self._run_real_driver(job_id=job_id, topic=topic)
+                await self._run_real_driver(job_id=job_id, topic=topic, depth=depth, user_id=user_id)
             else:
-                await self._run_fallback_driver(job_id=job_id, topic=topic)
+                await self._run_fallback_driver(
+                    job_id=job_id,
+                    topic=topic,
+                    depth=depth,
+                    user_id=user_id,
+                )
         except Exception as exc:  # pragma: no cover - defensive path
+            failed = True
             await self._emit(job_id, {"type": "error", "msg": str(exc)})
         finally:
             await self._emit(job_id, "[DONE]")
             with db.SessionLocal() as session:
                 job = session.get(ResearchJob, job_id)
                 if job is not None:
-                    job.status = "completed"
+                    job.status = "failed" if failed else "completed"
                     session.commit()
 
-    async def _run_real_driver(self, *, job_id: str, topic: str) -> None:
+    async def _run_real_driver(
+        self,
+        *,
+        job_id: str,
+        topic: str,
+        depth: DepthLevel,
+        user_id: str,
+    ) -> None:
         """Stream events from LangGraph astream_events into frontend envelopes."""
         # Import lazily so environments without optional graph deps can still use fallback mode.
         from app.agent.graph import build_graph
@@ -125,7 +155,8 @@ class JobManager:
         initial_state = {
             "topic": topic,
             "job_id": job_id,
-            "user_id": sqlite_store.ensure_default_user(),
+            "user_id": user_id,
+            "depth": depth,
         }
         async for event in graph.astream_events(
             initial_state,
@@ -150,7 +181,14 @@ class JobManager:
                 },
             )
 
-    async def _run_fallback_driver(self, *, job_id: str, topic: str) -> None:
+    async def _run_fallback_driver(
+        self,
+        *,
+        job_id: str,
+        topic: str,
+        depth: DepthLevel,
+        user_id: str,
+    ) -> None:
         """Emit deterministic canned events and persist a synthetic report."""
         for event_type, message in [
             ("planner", "Planned sub-questions"),
@@ -195,7 +233,7 @@ class JobManager:
         )
         sqlite_store.persist_report(
             job_id=job_id,
-            user_id=sqlite_store.ensure_default_user(),
+            user_id=user_id,
             topic=topic,
             report=draft,
             rubric_score=None,
@@ -203,6 +241,7 @@ class JobManager:
             metadata={
                 "sources": [source.model_dump(mode="json")],
                 "trace_id": job_id,
+                "depth": depth,
             },
         )
 

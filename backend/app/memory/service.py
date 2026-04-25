@@ -5,6 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
+from app.agent.depth import normalize_depth
 from app.llm.router import Router, router as default_router
 from app.memory import sqlite_store
 from app.schemas import GuardrailReport, PreferenceDeltaList, RecalledMemory, Report, Rubric, Source
@@ -73,6 +74,7 @@ class MemoryService:
                 ),
                 "rubric": rubric.model_dump(mode="json") if isinstance(rubric, Rubric) else None,
                 "trace_id": str(trace_id) if trace_id is not None else None,
+                "depth": normalize_depth(payload.get("depth")),
             }
             report_id = sqlite_store.persist_report(
                 job_id=payload.get("job_id"),

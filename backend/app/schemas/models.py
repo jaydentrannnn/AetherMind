@@ -7,7 +7,7 @@ from typing import Any, Literal
 from uuid import UUID
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 SourceType = Literal["web_search", "arxiv", "pdf", "url", "code_exec"]
 
@@ -58,6 +58,19 @@ class Report(BaseModel):
     markdown: str
     sections: list[Section] = Field(default_factory=list)
     created_at: datetime | None = None
+
+    @field_validator("id", "job_id", mode="before")
+    @classmethod
+    def _coerce_optional_uuid(cls, value: Any) -> UUID | None:
+        """Drop invalid UUID strings from LLM output; persistence assigns real ids."""
+        if value is None or value == "":
+            return None
+        if isinstance(value, UUID):
+            return value
+        try:
+            return UUID(str(value))
+        except ValueError:
+            return None
 
 
 class SubQuestion(BaseModel):

@@ -8,6 +8,7 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.agent.depth import DepthLevel
 from app.api.jobs import get_job_manager
 
 router = APIRouter(tags=["research"])
@@ -16,7 +17,7 @@ router = APIRouter(tags=["research"])
 class ResearchOptionsRequest(BaseModel):
     """Optional controls used when starting one research job."""
 
-    depth: str | None = None
+    depth: DepthLevel = "standard"
     tools: dict[str, bool] | None = None
     preferred_domains: list[str] = Field(default_factory=list)
 

@@ -36,7 +36,16 @@ class ArxivSearchTool(BaseTool):
         max_results = int(kwargs.get("max_results", 5))
         results = await asyncio.to_thread(self._search_sync, query, max_results)
 
-        lines = [f"- {item['title']} ({item['id']})" for item in results]
+        _ABSTRACT_CHARS = 600
+        lines: list[str] = []
+        for item in results:
+            abstract = (item.get("summary") or "").strip().replace("\n", " ")
+            if len(abstract) > _ABSTRACT_CHARS:
+                abstract = abstract[:_ABSTRACT_CHARS].rstrip() + "…"
+            entry = f"- {item['title']} ({item['id']})"
+            if abstract:
+                entry += f"\n  {abstract}"
+            lines.append(entry)
         content = "\n".join(lines) if lines else "No arXiv results returned."
         first = results[0] if results else {}
         source = self._source_registry.create(

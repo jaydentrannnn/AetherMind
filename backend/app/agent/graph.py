@@ -12,6 +12,7 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
+from app.agent.depth import normalize_depth
 from app.agent.nodes.critic import critic_node
 from app.agent.nodes.guardrails import guardrails_node
 from app.agent.nodes.memory_writer import memory_writer_node
@@ -25,8 +26,16 @@ from app.llm.router import Router, router as default_router
 
 def _fan_out_from_plan(state: AgentState) -> list[Send]:
     """Create one researcher send call per planned sub-question."""
+    depth = normalize_depth(state.get("depth"))
     return [
-        Send("researcher", {"topic": state["topic"], "sub_question": sub_question})
+        Send(
+            "researcher",
+            {
+                "topic": state["topic"],
+                "depth": depth,
+                "sub_question": sub_question,
+            },
+        )
         for sub_question in state.get("plan", [])
     ]
 

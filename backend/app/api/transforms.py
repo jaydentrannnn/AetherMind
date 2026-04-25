@@ -2,11 +2,36 @@
 
 from __future__ import annotations
 
+import re
 from urllib.parse import urlparse
 
 from app.models import Report as ReportEntity
 from app.models import ResearchJob
 from app.schemas import GuardrailReport, Rubric, Source, UnverifiedClaim
+
+DOI_PATTERN = re.compile(
+    r"^(?:doi:\s*|https?://(?:dx\.)?doi\.org/)?(10\.\d{4,9}/\S+)$",
+    re.IGNORECASE,
+)
+
+
+def _normalize_source_url(url_or_doi: str | None) -> str:
+    """Normalize persisted source links into frontend-clickable URLs when possible."""
+    raw = (url_or_doi or "").strip()
+    if not raw:
+        return ""
+    parsed = urlparse(raw)
+    if parsed.scheme in {"http", "https"}:
+        return raw
+    lower = raw.lower()
+    if lower.startswith(("doi.org/", "dx.doi.org/")):
+        return f"https://{raw}"
+    doi_match = DOI_PATTERN.match(raw)
+    if doi_match:
+        return f"https://doi.org/{doi_match.group(1)}"
+    if raw.startswith("www."):
+        return f"https://{raw}"
+    return raw
 
 
 def _domain_from_url(url: str | None) -> str:
@@ -25,14 +50,28 @@ def _map_source_type(source_type: str) -> str:
     return mapping.get(source_type, source_type)
 
 
+def _source_display_title(source: Source, url: str) -> str:
+    """Derive a user-friendly source title when tool metadata is sparse."""
+    title = (source.title or "").strip()
+    if title and title.lower() != "untitled source":
+        return title
+    domain = _domain_from_url(url)
+    if domain:
+        return domain
+    if url:
+        return url
+    return f"Source {source.id[:8]}"
+
+
 def source_to_ui(source: Source, *, verified: bool = False) -> dict:
     """Convert one backend Source into the frontend source card shape."""
-    url = source.url_or_doi or ""
+    url = _normalize_source_url(source.url_or_doi)
+    domain = _domain_from_url(url)
     return {
         "id": source.id,
-        "title": source.title or "Untitled source",
+        "title": _source_display_title(source, url),
         "url": url,
-        "domain": _domain_from_url(url),
+        "domain": domain,
         "snippet": source.snippet,
         "verified": verified,
         "type": _map_source_type(source.source_type),

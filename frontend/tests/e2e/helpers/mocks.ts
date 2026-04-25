@@ -5,7 +5,7 @@ const MOCK_REPORT = {
   job_id: "j-test",
   title: "Mock Report",
   summary: "Summary",
-  markdown: "## Findings\n\nEvidence-backed summary.",
+  markdown: "## Findings\n\nEvidence-backed summary [src-1].",
   sections: [],
   sources: [
     {

@@ -22,6 +22,22 @@ def test_report_round_trip_dump_and_validate() -> None:
     assert restored.version == 1
 
 
+def test_report_coerces_invalid_llm_uuid_fields_to_none() -> None:
+    """Synthesis must not fail when the model emits fake UUID-looking strings."""
+    report = Report.model_validate(
+        {
+            "id": "8f9a2b3c-4d5e-6f7g-8h9i-0j1k2l3m4n5o",
+            "job_id": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
+            "title": "Test",
+            "markdown": "# Body",
+            "sections": [],
+        }
+    )
+    assert report.id is None
+    assert report.job_id is None
+    assert report.title == "Test"
+
+
 def test_rubric_score_bounds_are_enforced() -> None:
     """Ensure rubric dimensions are constrained to the documented 0..5 range."""
     critique = Critique(

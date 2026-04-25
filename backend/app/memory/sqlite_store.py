@@ -16,6 +16,38 @@ from app.models import ResearchJob
 from app.models import User
 from app.schemas import Report, Source
 
+_MIN_MARKDOWN_CHARS = 200
+
+
+def _derive_markdown_from_sections(report: Report) -> str:
+    """Build a markdown document from structured sections as a fallback."""
+    parts: list[str] = []
+    if report.title:
+        parts.append(f"# {report.title}")
+    if report.summary:
+        parts.append(report.summary.strip())
+    for section in report.sections:
+        title = (section.title or "").strip()
+        body = (section.content or "").strip()
+        if not title and not body:
+            continue
+        if title:
+            parts.append(f"## {title}")
+        if body:
+            parts.append(body)
+    return "\n\n".join(parts).strip()
+
+
+def _normalized_markdown(report: Report) -> str:
+    """Return report markdown, deriving from sections when blank or too sparse."""
+    markdown = (report.markdown or "").strip()
+    if len(markdown) >= _MIN_MARKDOWN_CHARS:
+        return markdown
+    derived = _derive_markdown_from_sections(report)
+    if len(derived) > len(markdown):
+        return derived
+    return markdown
+
 
 def ensure_default_user() -> str:
     """Return the default user id, creating the row on first use."""
@@ -103,13 +135,15 @@ def persist_report(
         max_version = session.scalar(
             select(func.max(ReportEntity.version)).where(ReportEntity.job_id == resolved_job_id)
         )
+        normalized_markdown = _normalized_markdown(report)
         json_blob = report.model_dump(mode="json")
+        json_blob["markdown"] = normalized_markdown
         if metadata:
             json_blob.update(metadata)
         report_row = ReportEntity(
             job_id=resolved_job_id,
             version=(max_version or 0) + 1,
-            markdown=report.markdown,
+            markdown=normalized_markdown,
             json_blob=json_blob,
             rubric_score=rubric_score,
         )

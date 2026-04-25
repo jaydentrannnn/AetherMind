@@ -99,9 +99,9 @@ const ContentBlockSchema = z.discriminatedUnion('type', [
 ]);
 
 const ReportSectionSchema = z.object({
-  id:      z.string(),
+  id:      z.string().optional(),
   title:   z.string(),
-  content: z.array(ContentBlockSchema),
+  content: z.union([z.array(ContentBlockSchema), z.string()]),
 });
 
 const ReportVersionMetaSchema = z.object({

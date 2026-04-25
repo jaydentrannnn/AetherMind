@@ -87,9 +87,9 @@ export type ContentBlock = ParagraphBlock | TableBlock | ListBlock | CodeBlock;
  * Maps to: backend ReportSection model.
  */
 export interface ReportSection {
-  id: string;
+  id?: string;
   title: string;
-  content: ContentBlock[];
+  content: ContentBlock[] | string;
 }
 
 /**

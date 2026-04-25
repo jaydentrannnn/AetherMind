@@ -1,5 +1,6 @@
 You are the critic node for AetherMind.
 Topic: {{ topic }}
+Depth: {{ depth }}
 Draft report: {{ draft }}
 Findings: {{ findings }}
 Current revision count: {{ revisions }}
@@ -22,11 +23,22 @@ Evaluate with rubric categories:
 - bias
 - structure
 
-If unverified_claims or closure_violations are non-empty, include at least one
-directive beginning with "evidence:" so the system can gather missing evidence.
+Completeness / depth policy:
+- A draft is NOT approved if it is obviously shallow: fewer than {{ min_substantive_sections }}
+  substantive `sections` (where substantive means non-empty section `content` prose),
+  a markdown body under ~{{ min_markdown_chars }} characters, or sections that are only
+  headings without prose. In those cases, do not approve even if citations look fine.
+- If the underlying findings appear rich enough to expand, emit a directive
+  beginning with "expand:" describing which sections need more depth. The system
+  will route back to the synthesizer for another pass.
+- If the findings themselves are too thin to support a full report, emit a
+  directive beginning with "evidence:" so the system can gather more evidence.
+- If unverified_claims or closure_violations are non-empty, include at least one
+  directive beginning with "evidence:".
 
 Return JSON matching the critique schema with:
 - score (0-5)
 - approved (bool)
-- directives (list of concrete revision instructions)
+- directives (list of concrete revision instructions; each prefixed with
+  "expand:", "evidence:", or another clear verb)
 - rubric object

@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Any
 
+from app.agent.depth import normalize_depth, profile_for_depth
 from app.agent.prompts.render import renderer
+
+_log = logging.getLogger(__name__)
 from app.agent.state import AgentState
 from app.schemas import Finding, ToolResult
 from app.tools.base import BaseTool, SourceRegistry
-
 
 def _build_tool_catalog(source_registry: SourceRegistry) -> dict[str, BaseTool]:
     """Create a tool-name to tool-instance mapping for one researcher run."""
@@ -23,10 +26,26 @@ def _build_tool_catalog(source_registry: SourceRegistry) -> dict[str, BaseTool]:
     }
 
 
-def _tool_kwargs(tool_name: str, sub_question_text: str) -> dict[str, Any] | None:
+def _tool_kwargs(
+    tool_name: str,
+    sub_question_text: str,
+    *,
+    depth: str | None,
+) -> dict[str, Any] | None:
     """Return default tool kwargs for a sub-question or None when unavailable."""
+    profile = profile_for_depth(normalize_depth(depth))
     if tool_name in {"web_search", "arxiv_search"}:
-        return {"query": sub_question_text, "max_results": 3}
+        kwargs: dict[str, Any] = {
+            "query": sub_question_text,
+            "max_results": profile.search_max_results,
+        }
+        if tool_name == "web_search":
+            kwargs["search_depth"] = profile.web_search_depth
+        return kwargs
+    if tool_name == "fetch_url":
+        return {"url": sub_question_text}
+    if tool_name == "pdf_loader":
+        return {"path_or_url": sub_question_text}
     return None
 
 
@@ -34,7 +53,8 @@ async def _safe_tool_run(tool: BaseTool, kwargs: dict[str, Any]) -> ToolResult |
     """Execute a tool and swallow failures to keep fan-out resilient."""
     try:
         return await tool.run(**kwargs)
-    except Exception:
+    except Exception as exc:
+        _log.warning("Tool %s failed: %s", tool.name, exc)
         return None
 
 
@@ -44,13 +64,14 @@ async def researcher_node(state: AgentState) -> AgentState:
     source_registry = SourceRegistry()
     catalog = _build_tool_catalog(source_registry)
     requested_tools = sub_question.suggested_tools or ["web_search", "arxiv_search"]
+    depth = normalize_depth(state.get("depth"))
 
     tasks: list[asyncio.Task[ToolResult | None]] = []
     for tool_name in requested_tools:
         tool = catalog.get(tool_name)
         if tool is None:
             continue
-        kwargs = _tool_kwargs(tool_name, sub_question.question)
+        kwargs = _tool_kwargs(tool_name, sub_question.question, depth=depth)
         if kwargs is None:
             continue
         tasks.append(asyncio.create_task(_safe_tool_run(tool, kwargs)))
@@ -62,6 +83,7 @@ async def researcher_node(state: AgentState) -> AgentState:
         "researcher.j2",
         topic=state["topic"],
         sub_question=sub_question,
+        evidence=evidence_lines,
     )
     finding = Finding(
         sub_question_id=sub_question.id,

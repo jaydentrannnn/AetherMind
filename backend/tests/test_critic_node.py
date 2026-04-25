@@ -62,3 +62,23 @@ async def test_critic_uses_final_model_on_last_allowed_revision(
     )
     assert router.last_task == "critic_final"
     assert result["next_action"] == "memory_writer"
+
+
+async def test_critic_deep_gets_one_extra_revision_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Deep depth should use one additional revision before finalizing."""
+    monkeypatch.setattr(settings, "AGENT_MAX_REVISIONS", 2)
+    router = RecordingRouter(Critique(score=2.2, approved=False, directives=["Improve structure"]))
+    result = await critic_node(
+        {
+            "topic": "x",
+            "depth": "deep",
+            "draft": Report(title="t", markdown="m", sections=[]),
+            "revisions": 1,
+            "findings": [],
+        },
+        llm_router=router,
+    )
+    assert router.last_task == "critic_inner"
+    assert result["next_action"] != "memory_writer"

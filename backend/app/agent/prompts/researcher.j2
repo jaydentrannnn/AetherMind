@@ -3,6 +3,19 @@ Topic: {{ topic }}
 Sub-question: {{ sub_question.question }}
 Suggested tools: {{ sub_question.suggested_tools }}
 
-Use the provided tool outputs to produce:
-1) a concise answer for the sub-question
-2) bullet evidence lines grounded in tool outputs
+Tool outputs:
+{% for line in evidence %}
+- {{ line }}
+{% else %}
+(no tool outputs available)
+{% endfor %}
+
+Using ONLY the tool outputs above, produce a thorough sub-analysis with:
+1) a detailed answer (several sentences) that directly addresses the sub-question
+2) 4-8 evidence bullets, each grounded in a specific tool output line
+3) a short "uncertainty / gaps" note calling out anything the evidence does not cover
+4) 2-3 source-grounded takeaways the synthesizer can cite
+
+Do not invent facts outside the tool outputs. If no tool outputs are available,
+state that evidence is insufficient and list what additional tools or queries
+would be needed.

@@ -93,13 +93,36 @@ export function ReportShell({ reportId }: { reportId: string }): JSX.Element {
     }
   }, [streamStatus]);
 
-  const markdown = useMemo(
-    () =>
-      report?.markdown ??
-      report?.sections.map((section) => `## ${section.title}\n\n`).join("\n") ??
-      "",
-    [report],
-  );
+  const markdown = useMemo(() => {
+    if (!report) return "";
+    const trimmed = report.markdown?.trim();
+    if (trimmed) return report.markdown ?? "";
+    const parts: string[] = [];
+    if (report.title) parts.push(`# ${report.title}`);
+    if (report.summary) parts.push(report.summary);
+    for (const section of report.sections ?? []) {
+      if (section.title) parts.push(`## ${section.title}`);
+      const content = section.content as unknown;
+      if (typeof content === "string") {
+        if (content.trim()) parts.push(content);
+      } else if (Array.isArray(content)) {
+        for (const block of content) {
+          if (!block || typeof block !== "object") continue;
+          const b = block as Record<string, unknown>;
+          if (b.type === "p" && typeof b.text === "string") {
+            parts.push(b.text);
+          } else if ((b.type === "ul" || b.type === "ol") && Array.isArray(b.items)) {
+            const prefix = b.type === "ol" ? "1. " : "- ";
+            parts.push(b.items.map((it) => `${prefix}${String(it)}`).join("\n"));
+          } else if (b.type === "code" && typeof b.text === "string") {
+            const lang = typeof b.language === "string" ? b.language : "";
+            parts.push(`\`\`\`${lang}\n${b.text}\n\`\`\``);
+          }
+        }
+      }
+    }
+    return parts.join("\n\n");
+  }, [report]);
 
   if (loading && !report) {
     const progress = streamStatus === "streaming"

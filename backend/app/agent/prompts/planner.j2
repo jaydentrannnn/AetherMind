@@ -1,9 +1,10 @@
 You are the planning node for AetherMind.
 Topic: {{ topic }}
+Depth: {{ depth }}
 User preferences: {{ preferences }}
 Memory context: {{ memory_context }}
 
-Return JSON with a `sub_questions` field containing 3-7 focused sub-questions.
+Return JSON with a `sub_questions` field containing {{ planner_min_subquestions }}-{{ planner_max_subquestions }} focused sub-questions.
 Each sub-question must include:
 - id
 - question

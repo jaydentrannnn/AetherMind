@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, TypedDict
 
+from app.agent.depth import DepthLevel
 from app.schemas import Critique, Feedback, GuardrailReport, Finding, Report, Source, SubQuestion
 
 
@@ -29,6 +30,7 @@ class AgentState(TypedDict, total=False):
     """Top-level state for the planner -> researcher -> synth loop."""
 
     topic: str
+    depth: DepthLevel
     preferences: dict[str, Any]
     memory_context: dict[str, Any]
     user_id: str
@@ -45,3 +47,4 @@ class AgentState(TypedDict, total=False):
     approved: bool
     next_action: str
     revision_directives: list[str]
+    filtered_sources: list[Source] | None
