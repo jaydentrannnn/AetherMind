@@ -10,3 +10,8 @@ Each sub-question must include:
 - question
 - rationale
 - suggested_tools (subset of: web_search, arxiv_search, fetch_url, pdf_loader, code_exec)
+
+Tool selection rules:
+- Prefer `web_search` and `arxiv_search` for general natural-language sub-questions.
+- Use `fetch_url` only when the sub-question includes a concrete URL target.
+- Use `pdf_loader` only when the sub-question includes a concrete PDF URL/path target.

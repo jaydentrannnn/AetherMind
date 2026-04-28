@@ -1,0 +1,36 @@
+[
+  {
+    "case_id": "smoke-1",
+    "question": "What are the benefits of writing automated tests?",
+    "answer": "Automated tests catch regressions quickly and make refactoring safer.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "A strong test suite increases confidence when refactoring code."
+    ],
+    "citations": [
+      {
+        "source_id": "src-1",
+        "snippet": "Automated tests detect regressions early."
+      },
+      {
+        "source_id": "src-2",
+        "snippet": "Tests make refactoring safer."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-2",
+    "question": "Why does clear documentation help teams?",
+    "answer": "Clear documentation aligns teams and reduces onboarding time.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Good docs reduce onboarding friction for new team members."
+    ],
+    "citations": [
+      {
+        "source_id": "src-3",
+        "snippet": "Shared documentation keeps contributors aligned."
+      }
+    ]
+  }
+]
