@@ -21,3 +21,5 @@ def test_reduce_sources_dedupes_by_url_or_doi() -> None:
     second = Source(source_type="web_search", title="B", url_or_doi="https://example.com")
     reduced = reduce_sources([first], [second])
     assert len(reduced) == 1
+    alias_ids = (reduced[0].metadata or {}).get("alias_ids") or []
+    assert second.id in alias_ids

@@ -5,11 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.agent.depth import DepthLevel
 from app.api.jobs import get_job_manager
+from app import db
+from app.models import ResearchJob
 
 router = APIRouter(tags=["research"])
 
@@ -47,6 +50,10 @@ async def create_research(payload: CreateResearchRequest) -> CreateResearchRespo
 @router.get("/research/{job_id}/stream")
 async def stream_research(job_id: str) -> StreamingResponse:
     """Stream SSE events for a research job lifecycle."""
+    with db.SessionLocal() as session:
+        existing = session.get(ResearchJob, job_id)
+        if existing is None:
+            raise HTTPException(status_code=404, detail="Unknown job id")
     manager = get_job_manager()
     response = StreamingResponse(manager.subscribe(job_id), media_type="text/event-stream")
     # Prevent proxy buffering; SSE must flush events immediately.

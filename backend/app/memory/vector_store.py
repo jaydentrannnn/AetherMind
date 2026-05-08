@@ -146,22 +146,23 @@ class VectorStore:
             embedding_function=None,
         )
 
-    async def add_report_summary(self, report_id: str, topic: str, summary: str) -> None:
-        """Embed and upsert one report summary record."""
+    async def add_report_summary(self, report_id: str, topic: str, summary: str, *, user_id: str) -> None:
+        """Embed and upsert one report summary record scoped to one user."""
         vector = await self._embedder.embed_one(summary)
         self._reports.upsert(
             ids=[report_id],
             documents=[summary],
             embeddings=[vector],
-            metadatas=[{"topic": topic}],
+            metadatas=[{"topic": topic, "user_id": user_id}],
         )
 
-    async def query_reports(self, topic: str, k: int = 5) -> list[dict]:
-        """Return top-k similar report summaries for a topic string."""
+    async def query_reports(self, topic: str, *, user_id: str, k: int = 5) -> list[dict]:
+        """Return top-k similar report summaries for a topic string scoped to one user."""
         vector = await self._embedder.embed_one(topic)
         result = self._reports.query(
             query_embeddings=[vector],
             n_results=k,
+            where={"user_id": user_id},
             include=["distances", "documents", "metadatas"],
         )
         return self._format_query(result, id_key="report_id")

@@ -176,12 +176,13 @@ def persist_report(
         return report_row.id
 
 
-def list_reports_for_topic(topic: str, limit: int = 5) -> list[dict]:
-    """Return recent persisted reports for a topic when vector recall is empty."""
+def list_reports_for_topic(*, topic: str, user_id: str, limit: int = 5) -> list[dict]:
+    """Return recent persisted reports for a topic scoped to one user."""
     with db.SessionLocal() as session:
         rows = session.scalars(
             select(ReportEntity)
             .join(ResearchJob, ReportEntity.job_id == ResearchJob.id)
+            .where(ResearchJob.user_id == user_id)
             .where(ResearchJob.topic.ilike(f"%{topic}%"))
             .order_by(ReportEntity.created_at.desc())
             .limit(limit)

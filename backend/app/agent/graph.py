@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from functools import partial
 from pathlib import Path
 from typing import Literal
@@ -32,6 +33,8 @@ def _fan_out_from_plan(state: AgentState) -> list[Send]:
             "researcher",
             {
                 "topic": state["topic"],
+                "job_id": state.get("job_id"),
+                "user_id": state.get("user_id"),
                 "depth": depth,
                 "sub_question": sub_question,
                 "trace_id": state.get("trace_id"),
@@ -61,11 +64,27 @@ async def _build_checkpointer() -> AsyncSqliteSaver:
     return AsyncSqliteSaver(conn)
 
 
+@asynccontextmanager
+async def open_checkpointer() -> AsyncSqliteSaver:
+    """Yield a SQLite-backed LangGraph checkpointer and close it on exit.
+
+    This helper exists to prevent leaking the underlying SQLite connection when
+    the API layer compiles the graph for per-job execution.
+    """
+    checkpoint_path = Path(settings.AGENT_CHECKPOINT_PATH)
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = await aiosqlite.connect(str(checkpoint_path))
+    try:
+        yield AsyncSqliteSaver(conn)
+    finally:
+        await conn.close()
+
+
 def build_graph(*, llm_router: Router | None = None, checkpointer: BaseCheckpointSaver | None = None):
     """Compile and return the phase-5 LangGraph with checkpointing.
 
     Pass an explicit checkpointer (e.g. InMemorySaver) in tests; production
-    callers should await _build_checkpointer() and pass the result here.
+    callers should use ``open_checkpointer()`` and pass the yielded saver here.
     """
     selected_router = llm_router or default_router
     graph = StateGraph(AgentState)

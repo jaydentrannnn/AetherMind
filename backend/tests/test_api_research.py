@@ -45,3 +45,9 @@ def test_research_rejects_invalid_depth(api_client: TestClient) -> None:
         json={"topic": "bad depth", "options": {"depth": "ultra"}},
     )
     assert create.status_code == 422
+
+
+def test_stream_rejects_unknown_job_id(api_client: TestClient) -> None:
+    """Streaming an unknown job id should return 404 rather than hanging."""
+    stream = api_client.get("/research/00000000-0000-0000-0000-000000000000/stream")
+    assert stream.status_code == 404

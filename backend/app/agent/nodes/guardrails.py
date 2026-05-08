@@ -17,8 +17,9 @@ log = structlog.get_logger(__name__)
 async def guardrails_node(state: AgentState, *, llm_router: Router | None = None) -> AgentState:
     """Generate guardrail report and preserve in-place citation mutations."""
     trace_id = state.get("trace_id")
+    job_id = state.get("job_id")
     structlog.contextvars.bind_contextvars(
-        node="guardrails", job_id=state.get("job_id"), trace_id=trace_id
+        node="guardrails", job_id=job_id, trace_id=trace_id
     )
     span = get_tracer().span(trace_id, name="guardrails", input={"has_draft": state.get("draft") is not None})
     try:
@@ -36,7 +37,7 @@ async def guardrails_node(state: AgentState, *, llm_router: Router | None = None
             deny_domains,
         )
         verifier = CitationVerifier(llm_router=llm_router)
-        report = await verifier.verify(draft, allowed_sources)
+        report = await verifier.verify(draft, allowed_sources, trace_id=trace_id, job_id=job_id)
         report.policy_violations = policy_violations
         get_tracer().end_span(span, output={"violations": len(policy_violations)})
         return {"guardrail_report": report, "draft": draft, "filtered_sources": allowed_sources}

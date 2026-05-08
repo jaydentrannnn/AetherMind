@@ -318,12 +318,9 @@ class LLMClient:
                 stripped_chars=len(content),
                 starts_with=(content[:60] if content else ""),
             )
-            # Extract first JSON object/array if the model wrapped it in extra text
-            m = re.search(r"\{.*\}", content, re.DOTALL)
-            if m:
-                content = m.group()
             try:
-                return schema.model_validate_json(content)
+                extracted = _extract_first_json_value(content)
+                return schema.model_validate_json(extracted)
             except (ValidationError, ValueError) as err:
                 if attempt == 1:
                     raise StructuredOutputError(
@@ -423,6 +420,29 @@ def _schema_to_plain(json_schema: dict[str, Any]) -> str:
 def _strip_think_tags(text: str) -> str:
     """Strip Qwen3/DeepSeek chain-of-thought blocks so only JSON remains."""
     return _THINK_RE.sub("", text).strip()
+
+
+def _extract_first_json_value(text: str) -> str:
+    """Extract the first valid JSON value embedded in freeform text.
+
+    Ollama models sometimes wrap JSON in prose or emit multiple JSON blobs. This
+    helper uses Python's JSONDecoder to find the first decodable value starting
+    at any '{' or '[' character, returning a compact JSON string suitable for
+    Pydantic's ``model_validate_json``.
+    """
+    stripped = (text or "").strip()
+    if not stripped:
+        return stripped
+    decoder = json.JSONDecoder()
+    for idx, ch in enumerate(stripped):
+        if ch not in "{[":
+            continue
+        try:
+            value, _ = decoder.raw_decode(stripped[idx:])
+        except json.JSONDecodeError:
+            continue
+        return json.dumps(value, ensure_ascii=False)
+    return stripped
 
 
 def _safe_json_loads(s: str) -> Any:

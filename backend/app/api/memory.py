@@ -100,10 +100,11 @@ async def search_memory(q: str = Query(..., min_length=1)) -> dict:
     """Run semantic recall over reports and return frontend result rows."""
     from app.memory.vector_store import VectorStore
 
+    user_id = sqlite_store.ensure_default_user()
     vector_store = VectorStore()
-    recalled = await vector_store.query_reports(q, k=5)
+    recalled = await vector_store.query_reports(q, user_id=user_id, k=5)
     if not recalled:
-        recalled = sqlite_store.list_reports_for_topic(q, limit=5)
+        recalled = sqlite_store.list_reports_for_topic(topic=q, user_id=user_id, limit=5)
     results = [
         {
             "id": row.get("report_id") or row.get("id") or "",

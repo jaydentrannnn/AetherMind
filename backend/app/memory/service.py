@@ -38,9 +38,9 @@ class MemoryService:
         preferences = sqlite_store.get_preferences(resolved_user_id)
         allow_domains, deny_domains = sqlite_store.get_domain_lists(resolved_user_id)
         semantic_preferences = await self._vector_store.query_preferences(topic, resolved_user_id, k=5)
-        past_reports = await self._vector_store.query_reports(topic, k=5)
+        past_reports = await self._vector_store.query_reports(topic, user_id=resolved_user_id, k=5)
         if not past_reports:
-            past_reports = sqlite_store.list_reports_for_topic(topic, limit=5)
+            past_reports = sqlite_store.list_reports_for_topic(topic=topic, user_id=resolved_user_id, limit=5)
         recalled = RecalledMemory(
             preferences=preferences,
             allow_domains=allow_domains,
@@ -87,7 +87,9 @@ class MemoryService:
             )
 
             summary_text = draft.summary or draft.title
-            await self._vector_store.add_report_summary(report_id=report_id, topic=topic, summary=summary_text)
+            await self._vector_store.add_report_summary(
+                report_id=report_id, topic=topic, summary=summary_text, user_id=user_id
+            )
             claims_persisted = sum(len(section.claims) for section in draft.sections)
 
         feedback = payload.get("feedback")
@@ -107,6 +109,11 @@ class MemoryService:
                     }
                 ],
                 PreferenceDeltaList,
+                metadata={
+                    "trace_id": payload.get("trace_id"),
+                    "job_id": payload.get("job_id"),
+                    "node": "memory:pref_extract",
+                },
             )
 
         for delta in deltas.deltas:

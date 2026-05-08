@@ -35,8 +35,22 @@ class CitationVerifier:
             return 0.0
         return len(left_tokens & right_tokens) / len(union)
 
-    async def verify(self, draft: Report, sources: list[Source]) -> GuardrailReport:
-        """Mutate citation verification flags and return guardrail findings."""
+    async def verify(
+        self,
+        draft: Report,
+        sources: list[Source],
+        *,
+        trace_id: str | None = None,
+        job_id: str | None = None,
+    ) -> GuardrailReport:
+        """Mutate citation verification flags and return guardrail findings.
+
+        Args:
+            draft: The synthesized report draft to verify in-place.
+            sources: Allowed sources used to build the source id map.
+            trace_id: Optional trace identifier for observability correlation.
+            job_id: Optional job identifier for observability correlation.
+        """
         source_map = {source.id: source for source in sources}
         report = GuardrailReport()
 
@@ -76,6 +90,7 @@ class CitationVerifier:
                             }
                         ],
                         EntailmentVerdict,
+                        metadata={"trace_id": trace_id, "job_id": job_id, "node": "guardrails:entailment"},
                     )
                     if verdict.entails and verdict.confidence >= settings.CITATION_ENTAILMENT_MIN_CONFIDENCE:
                         citation.verified = True

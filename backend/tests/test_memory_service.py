@@ -32,12 +32,14 @@ class FakeVectorStore:
         self.report_rows: list[dict] = []
         self.preference_rows: list[dict] = []
 
-    async def add_report_summary(self, report_id: str, topic: str, summary: str) -> None:
+    async def add_report_summary(self, report_id: str, topic: str, summary: str, *, user_id: str) -> None:
         """Store one report summary row."""
+        del user_id
         self.report_rows.append({"report_id": report_id, "topic": topic, "summary": summary, "score": 1.0})
 
-    async def query_reports(self, topic: str, k: int = 5) -> list[dict]:
+    async def query_reports(self, topic: str, *, user_id: str, k: int = 5) -> list[dict]:
         """Return matching report rows by topic substring."""
+        del user_id
         del k
         return [row for row in self.report_rows if topic.lower() in row["topic"].lower()]
 

@@ -46,6 +46,7 @@ class JobRuntime:
     replay: deque[str] = field(default_factory=lambda: deque(maxlen=200))
     subscribers: set[asyncio.Queue[str]] = field(default_factory=set)
     task: asyncio.Task[None] | None = None
+    completed_at: float | None = None
 
 
 class JobManager:
@@ -55,6 +56,8 @@ class JobManager:
         """Initialize in-memory runtime maps for active and completed jobs."""
         self._jobs: dict[str, JobRuntime] = {}
         self._lock = asyncio.Lock()
+        self._replay_ttl_s = 60.0
+        self._subscriber_queue_max = 500
 
     async def start(self, topic: str, options: dict[str, Any] | None, user_id: str | None) -> str:
         """Create one ResearchJob row and schedule async execution."""
@@ -89,10 +92,21 @@ class JobManager:
 
     async def subscribe(self, job_id: str) -> AsyncIterator[str]:
         """Yield SSE lines for a job, replaying buffered events then live events."""
-        runtime = self._jobs.setdefault(job_id, JobRuntime())
-        q: asyncio.Queue[str] = asyncio.Queue()
+        runtime = self._jobs.get(job_id)
+        if runtime is None:
+            with db.SessionLocal() as session:
+                job = session.get(ResearchJob, job_id)
+            if job is None:
+                raise KeyError(job_id)
+            if job.status in {"completed", "failed"}:
+                yield _format_sse("[DONE]")
+                return
+            yield _format_sse(json.dumps({"type": "error", "msg": "Job runtime unavailable"}))
+            yield _format_sse("[DONE]")
+            return
+        q: asyncio.Queue[str] = asyncio.Queue(maxsize=self._subscriber_queue_max)
         for item in runtime.replay:
-            await q.put(item)
+            self._safe_queue_put(q, item)
         runtime.subscribers.add(q)
         try:
             while True:
@@ -103,13 +117,30 @@ class JobManager:
         finally:
             runtime.subscribers.discard(q)
 
+    @staticmethod
+    def _safe_queue_put(q: asyncio.Queue[str], item: str) -> None:
+        """Enqueue an SSE line without blocking, dropping oldest on overflow."""
+        try:
+            q.put_nowait(item)
+            return
+        except asyncio.QueueFull:
+            pass
+        try:
+            _ = q.get_nowait()
+        except asyncio.QueueEmpty:
+            return
+        try:
+            q.put_nowait(item)
+        except asyncio.QueueFull:
+            return
+
     async def _emit(self, job_id: str, payload: dict[str, Any] | str) -> None:
         """Publish one payload to all subscriber queues and the replay buffer."""
         runtime = self._jobs.setdefault(job_id, JobRuntime())
         line = _format_sse(payload if isinstance(payload, str) else json.dumps(payload))
         runtime.replay.append(line)
         for q in list(runtime.subscribers):
-            await q.put(line)
+            self._safe_queue_put(q, line)
 
     def _supports_real_driver(self) -> bool:
         """Return whether required model settings are present for real execution."""
@@ -122,13 +153,20 @@ class JobManager:
         failed = False
         try:
             if self._supports_real_driver():
-                await self._run_real_driver(job_id=job_id, topic=topic, depth=depth, user_id=user_id, trace_id=trace_id)
+                await self._run_real_driver(
+                    job_id=job_id,
+                    topic=topic,
+                    depth=depth,
+                    user_id=user_id,
+                    trace_id=trace_id,
+                )
             else:
                 await self._run_fallback_driver(
                     job_id=job_id,
                     topic=topic,
                     depth=depth,
                     user_id=user_id,
+                    trace_id=trace_id,
                 )
         except Exception as exc:  # pragma: no cover - defensive path
             failed = True
@@ -138,11 +176,29 @@ class JobManager:
             if not failed:
                 tracer.end_trace(trace_id, output={"status": "completed"})
             await self._emit(job_id, "[DONE]")
+            async with self._lock:
+                runtime = self._jobs.get(job_id)
+                if runtime is not None:
+                    runtime.completed_at = time.monotonic()
+                    asyncio.create_task(self._cleanup_after_ttl(job_id))
             with db.SessionLocal() as session:
                 job = session.get(ResearchJob, job_id)
                 if job is not None:
                     job.status = "failed" if failed else "completed"
                     session.commit()
+
+    async def _cleanup_after_ttl(self, job_id: str) -> None:
+        """Evict completed jobs after a short replay TTL to prevent leaks."""
+        await asyncio.sleep(self._replay_ttl_s)
+        async with self._lock:
+            runtime = self._jobs.get(job_id)
+            if runtime is None:
+                return
+            if runtime.subscribers:
+                return
+            if runtime.task is not None and not runtime.task.done():
+                return
+            self._jobs.pop(job_id, None)
 
     async def _run_real_driver(
         self,
@@ -155,39 +211,40 @@ class JobManager:
     ) -> None:
         """Stream events from LangGraph astream_events into frontend envelopes."""
         # Import lazily so environments without optional graph deps can still use fallback mode.
-        from app.agent.graph import build_graph
+        from app.agent.graph import build_graph, open_checkpointer
 
-        graph = build_graph(checkpointer=None)
-        started = time.monotonic()
-        initial_state = {
-            "topic": topic,
-            "job_id": job_id,
-            "user_id": user_id,
-            "depth": depth,
-            "trace_id": trace_id,
-        }
-        async for event in graph.astream_events(
-            initial_state,
-            version="v2",
-            config={"configurable": {"thread_id": job_id}},
-        ):
-            event_name = event.get("event", "")
-            metadata = event.get("metadata", {})
-            node_name = metadata.get("langgraph_node", "")
-            if not node_name and "name" in event:
-                node_name = str(event["name"])
-            if not node_name:
-                continue
-            msg = event_name or f"{node_name} event"
-            await self._emit(
-                job_id,
-                {
-                    "type": _event_type(node_name),
-                    "msg": msg,
-                    "ts": int((time.monotonic() - started) * 1000),
-                    "trace_id": job_id,
-                },
-            )
+        async with open_checkpointer() as checkpointer:
+            graph = build_graph(checkpointer=checkpointer)
+            started = time.monotonic()
+            initial_state = {
+                "topic": topic,
+                "job_id": job_id,
+                "user_id": user_id,
+                "depth": depth,
+                "trace_id": trace_id,
+            }
+            async for event in graph.astream_events(
+                initial_state,
+                version="v2",
+                config={"configurable": {"thread_id": job_id}},
+            ):
+                event_name = event.get("event", "")
+                metadata = event.get("metadata", {})
+                node_name = metadata.get("langgraph_node", "")
+                if not node_name and "name" in event:
+                    node_name = str(event["name"])
+                if not node_name:
+                    continue
+                msg = event_name or f"{node_name} event"
+                await self._emit(
+                    job_id,
+                    {
+                        "type": _event_type(node_name),
+                        "msg": msg,
+                        "ts": int((time.monotonic() - started) * 1000),
+                        "trace_id": trace_id,
+                    },
+                )
 
     async def _run_fallback_driver(
         self,
@@ -196,6 +253,7 @@ class JobManager:
         topic: str,
         depth: DepthLevel,
         user_id: str,
+        trace_id: str | None = None,
     ) -> None:
         """Emit deterministic canned events and persist a synthetic report."""
         for event_type, message in [
@@ -206,7 +264,7 @@ class JobManager:
             ("guardrails", "All checks passed"),
             ("critic", "Approved"),
         ]:
-            await self._emit(job_id, {"type": event_type, "msg": message, "trace_id": job_id})
+            await self._emit(job_id, {"type": event_type, "msg": message, "trace_id": trace_id or job_id})
 
         source = Source(
             id="src-1",
@@ -248,7 +306,7 @@ class JobManager:
             sources_map={source.id: source},
             metadata={
                 "sources": [source.model_dump(mode="json")],
-                "trace_id": job_id,
+                "trace_id": trace_id or job_id,
                 "depth": depth,
             },
         )

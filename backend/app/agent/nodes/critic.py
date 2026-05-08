@@ -53,8 +53,9 @@ def _is_shallow_draft(
 async def critic_node(state: AgentState, *, llm_router: Router | None = None) -> AgentState:
     """Score the draft and choose the next route in the graph loop."""
     trace_id = state.get("trace_id")
+    job_id = state.get("job_id")
     structlog.contextvars.bind_contextvars(
-        node="critic", job_id=state.get("job_id"), trace_id=trace_id
+        node="critic", job_id=job_id, trace_id=trace_id
     )
     span = get_tracer().span(trace_id, name="critic", input={"revisions": state.get("revisions", 0)})
     try:
@@ -80,6 +81,7 @@ async def critic_node(state: AgentState, *, llm_router: Router | None = None) ->
             task,
             [{"role": "user", "content": prompt}],
             Critique,
+            metadata={"trace_id": trace_id, "job_id": job_id, "node": "critic"},
         )
 
         draft = state.get("draft")

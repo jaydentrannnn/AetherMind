@@ -28,6 +28,7 @@ async def memory_writer_node(state: AgentState) -> AgentState:
                 "topic": state.get("topic"),
                 "job_id": state.get("job_id"),
                 "user_id": state.get("user_id"),
+                "trace_id": trace_id,
                 "draft": state.get("draft"),
                 "findings": state.get("findings", []),
                 "sources": state.get("sources", []),

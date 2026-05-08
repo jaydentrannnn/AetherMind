@@ -22,7 +22,8 @@ async def test_memory_writer_forwards_depth(monkeypatch) -> None:  # noqa: ANN00
     """memory_writer should include depth so persistence can round-trip it."""
     fake = FakeMemoryService()
     monkeypatch.setattr("app.agent.nodes.memory_writer.get_memory_service", lambda: fake)
-    await memory_writer_node({"topic": "x", "depth": "deep"})
+    await memory_writer_node({"topic": "x", "depth": "deep", "trace_id": "t-1"})
     assert len(fake.calls) == 1
     assert fake.calls[0]["depth"] == "deep"
+    assert fake.calls[0]["trace_id"] == "t-1"
 

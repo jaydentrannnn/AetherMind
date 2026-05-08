@@ -35,8 +35,9 @@ async def planner_node(
 ) -> AgentState:
     """Plan sub-questions for the topic and hydrate memory context."""
     trace_id = state.get("trace_id")
+    job_id = state.get("job_id")
     structlog.contextvars.bind_contextvars(
-        node="planner", job_id=state.get("job_id"), trace_id=trace_id
+        node="planner", job_id=job_id, trace_id=trace_id
     )
     span = get_tracer().span(trace_id, name="planner", input={"topic": state.get("topic")})
     try:
@@ -45,7 +46,7 @@ async def planner_node(
         depth = normalize_depth(state.get("depth"))
         depth_profile = profile_for_depth(depth)
         preferences = state.get("preferences", {})
-        memory_context = await get_memory_service().recall(topic)
+        memory_context = await get_memory_service().recall(topic, user_id=state.get("user_id"))
         prompt = renderer.render(
             "planner.j2",
             topic=topic,
@@ -59,6 +60,7 @@ async def planner_node(
             "planner",
             [{"role": "user", "content": prompt}],
             PlannerOutput,
+            metadata={"trace_id": trace_id, "job_id": job_id, "node": "planner"},
         )
         result: AgentState = {
             "depth": depth,

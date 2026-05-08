@@ -23,6 +23,16 @@ def reduce_sources(existing: list[Source], incoming: list[Source]) -> list[Sourc
         dedupe_key = source.url_or_doi or source.id
         if dedupe_key not in merged:
             merged[dedupe_key] = source
+            continue
+        canonical = merged[dedupe_key]
+        if canonical.id == source.id:
+            continue
+        alias_ids = list((canonical.metadata or {}).get("alias_ids") or [])
+        if source.id not in alias_ids:
+            alias_ids.append(source.id)
+        merged[dedupe_key] = canonical.model_copy(
+            update={"metadata": {**(canonical.metadata or {}), "alias_ids": alias_ids}}
+        )
     return list(merged.values())
 
 
