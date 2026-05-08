@@ -48,3 +48,4 @@ class AgentState(TypedDict, total=False):
     next_action: str
     revision_directives: list[str]
     filtered_sources: list[Source] | None
+    trace_id: str | None

@@ -1,12 +1,45 @@
+import os
+import uuid
+from contextlib import asynccontextmanager
+
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-import uuid
 
 from app.api.router import router as api_router
 from app.config import settings
+from app.observability import get_tracer
 
-app = FastAPI(title="AetherMind", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Configure structlog, wire LiteLLM → Langfuse, and flush on shutdown."""
+    is_prod = os.getenv("ENVIRONMENT", "development") == "production"
+    log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
+    log_level = getattr(__import__("logging"), log_level_name, 20)
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.JSONRenderer() if is_prod else structlog.dev.ConsoleRenderer(),
+        ],
+        wrapper_class=structlog.make_filtering_bound_logger(log_level),
+        context_class=dict,
+        logger_factory=structlog.PrintLoggerFactory(),
+    )
+    try:
+        import litellm  # type: ignore[import-not-found]
+        if settings.LANGFUSE_PUBLIC_KEY and settings.LANGFUSE_SECRET_KEY:
+            litellm.success_callback = ["langfuse"]
+    except Exception:
+        pass
+    yield
+    get_tracer().flush()
+
+
+app = FastAPI(title="AetherMind", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

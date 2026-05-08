@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import re
 from typing import Any
 
+import structlog
+
 from app.agent.depth import normalize_depth, profile_for_depth
 from app.agent.prompts.render import renderer
-
-_log = logging.getLogger(__name__)
 from app.agent.state import AgentState
+from app.observability import get_tracer
 from app.schemas import Finding, ToolResult
 from app.tools.base import BaseTool, SourceRegistry
+
+_log = structlog.get_logger(__name__)
 
 _URL_SCHEME_RE = re.compile(r"https?://[^\s)>\]}\"']+", re.IGNORECASE)
 _BARE_DOMAIN_RE = re.compile(
@@ -103,49 +105,71 @@ def _tool_kwargs(
     return None
 
 
-async def _safe_tool_run(tool: BaseTool, kwargs: dict[str, Any]) -> ToolResult | None:
+async def _safe_tool_run(
+    tool: BaseTool, kwargs: dict[str, Any], *, trace_id: str | None = None
+) -> ToolResult | None:
     """Execute a tool and swallow failures to keep fan-out resilient."""
+    span = get_tracer().span(trace_id, name=f"tool:{tool.name}", input=kwargs)
     try:
-        return await tool.run(**kwargs)
+        result = await tool.run(**kwargs)
+        get_tracer().end_span(span, output={"success": True})
+        return result
     except Exception as exc:
-        _log.warning("Tool %s failed: %s", tool.name, exc)
+        _log.warning("tool_failed", tool=tool.name, error=str(exc))
+        get_tracer().end_span(span, error=str(exc))
         return None
 
 
 async def researcher_node(state: AgentState) -> AgentState:
     """Run selected tools concurrently for one sub-question branch."""
+    trace_id = state.get("trace_id")
     sub_question = state["sub_question"]
-    source_registry = SourceRegistry()
-    catalog = _build_tool_catalog(source_registry)
-    requested_tools = sub_question.suggested_tools or ["web_search", "arxiv_search"]
-    depth = normalize_depth(state.get("depth"))
-
-    tasks: list[asyncio.Task[ToolResult | None]] = []
-    for tool_name in requested_tools:
-        tool = catalog.get(tool_name)
-        if tool is None:
-            continue
-        kwargs = _tool_kwargs(tool_name, sub_question.question, depth=depth)
-        if kwargs is None:
-            continue
-        tasks.append(asyncio.create_task(_safe_tool_run(tool, kwargs)))
-
-    results = await asyncio.gather(*tasks) if tasks else []
-    successful = [result for result in results if result is not None]
-    evidence_lines = [result.content for result in successful]
-    answer = renderer.render(
-        "researcher.j2",
-        topic=state["topic"],
-        sub_question=sub_question,
-        evidence=evidence_lines,
-    )
-    finding = Finding(
+    structlog.contextvars.bind_contextvars(
+        node="researcher",
         sub_question_id=sub_question.id,
-        answer=answer,
-        evidence=evidence_lines,
-        source_ids=[result.source.id for result in successful],
+        job_id=state.get("job_id"),
+        trace_id=trace_id,
     )
-    return {
-        "findings": [finding],
-        "sources": [result.source for result in successful],
-    }
+    span = get_tracer().span(
+        trace_id, name=f"researcher:{sub_question.id}", input={"question": sub_question.question}
+    )
+    try:
+        source_registry = SourceRegistry()
+        catalog = _build_tool_catalog(source_registry)
+        requested_tools = sub_question.suggested_tools or ["web_search", "arxiv_search"]
+        depth = normalize_depth(state.get("depth"))
+
+        tasks: list[asyncio.Task[ToolResult | None]] = []
+        for tool_name in requested_tools:
+            tool = catalog.get(tool_name)
+            if tool is None:
+                continue
+            kwargs = _tool_kwargs(tool_name, sub_question.question, depth=depth)
+            if kwargs is None:
+                continue
+            tasks.append(asyncio.create_task(_safe_tool_run(tool, kwargs, trace_id=trace_id)))
+
+        results = await asyncio.gather(*tasks) if tasks else []
+        successful = [result for result in results if result is not None]
+        evidence_lines = [result.content for result in successful]
+        answer = renderer.render(
+            "researcher.j2",
+            topic=state["topic"],
+            sub_question=sub_question,
+            evidence=evidence_lines,
+        )
+        finding = Finding(
+            sub_question_id=sub_question.id,
+            answer=answer,
+            evidence=evidence_lines,
+            source_ids=[result.source.id for result in successful],
+        )
+        result_state: AgentState = {
+            "findings": [finding],
+            "sources": [result.source for result in successful],
+        }
+        get_tracer().end_span(span, output={"sources_found": len(successful)})
+        return result_state
+    except Exception as exc:
+        get_tracer().end_span(span, error=str(exc))
+        raise

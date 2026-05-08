@@ -17,6 +17,7 @@ from app import db
 from app.config import settings
 from app.memory import sqlite_store
 from app.models import ResearchJob
+from app.observability import get_tracer
 from app.schemas import Claim, Citation, Report, Section, Source
 
 
@@ -116,10 +117,12 @@ class JobManager:
 
     async def _run(self, *, job_id: str, topic: str, depth: DepthLevel, user_id: str) -> None:
         """Execute one job via real graph driver or deterministic fallback."""
+        tracer = get_tracer()
+        trace_id = tracer.start_trace(job_id=job_id, topic=topic)
         failed = False
         try:
             if self._supports_real_driver():
-                await self._run_real_driver(job_id=job_id, topic=topic, depth=depth, user_id=user_id)
+                await self._run_real_driver(job_id=job_id, topic=topic, depth=depth, user_id=user_id, trace_id=trace_id)
             else:
                 await self._run_fallback_driver(
                     job_id=job_id,
@@ -129,8 +132,11 @@ class JobManager:
                 )
         except Exception as exc:  # pragma: no cover - defensive path
             failed = True
+            tracer.end_trace(trace_id, error=str(exc))
             await self._emit(job_id, {"type": "error", "msg": str(exc)})
         finally:
+            if not failed:
+                tracer.end_trace(trace_id, output={"status": "completed"})
             await self._emit(job_id, "[DONE]")
             with db.SessionLocal() as session:
                 job = session.get(ResearchJob, job_id)
@@ -145,6 +151,7 @@ class JobManager:
         topic: str,
         depth: DepthLevel,
         user_id: str,
+        trace_id: str | None = None,
     ) -> None:
         """Stream events from LangGraph astream_events into frontend envelopes."""
         # Import lazily so environments without optional graph deps can still use fallback mode.
@@ -157,6 +164,7 @@ class JobManager:
             "job_id": job_id,
             "user_id": user_id,
             "depth": depth,
+            "trace_id": trace_id,
         }
         async for event in graph.astream_events(
             initial_state,

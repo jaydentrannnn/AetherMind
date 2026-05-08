@@ -34,6 +34,7 @@ def _fan_out_from_plan(state: AgentState) -> list[Send]:
                 "topic": state["topic"],
                 "depth": depth,
                 "sub_question": sub_question,
+                "trace_id": state.get("trace_id"),
             },
         )
         for sub_question in state.get("plan", [])

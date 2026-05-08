@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import structlog
+
 from app.agent.depth import normalize_depth, profile_for_depth
 from app.agent.prompts.render import renderer
 from app.agent.state import AgentState
 from app.config import settings
 from app.llm.router import Router, router as default_router
+from app.observability import get_tracer
 from app.schemas import Critique, Report
+
+log = structlog.get_logger(__name__)
 
 _STANDARD_PROFILE = profile_for_depth("standard")
 SHALLOW_MARKDOWN_MIN_CHARS = _STANDARD_PROFILE.critic_min_markdown_chars
@@ -47,64 +52,73 @@ def _is_shallow_draft(
 
 async def critic_node(state: AgentState, *, llm_router: Router | None = None) -> AgentState:
     """Score the draft and choose the next route in the graph loop."""
-    selected_router = llm_router or default_router
-    depth = normalize_depth(state.get("depth"))
-    profile = profile_for_depth(depth)
-    revisions = state.get("revisions", 0)
-    effective_max_revisions = settings.AGENT_MAX_REVISIONS + profile.extra_revisions
-    task = "critic_final" if revisions + 1 >= effective_max_revisions else "critic_inner"
-    prompt = renderer.render(
-        "critic.j2",
-        topic=state["topic"],
-        depth=depth,
-        draft=state.get("draft"),
-        findings=state.get("findings", []),
-        guardrail_report=state.get("guardrail_report"),
-        revisions=revisions,
-        max_revisions=effective_max_revisions,
-        min_markdown_chars=profile.critic_min_markdown_chars,
-        min_substantive_sections=profile.critic_min_substantive_sections,
+    trace_id = state.get("trace_id")
+    structlog.contextvars.bind_contextvars(
+        node="critic", job_id=state.get("job_id"), trace_id=trace_id
     )
-    critique = await selected_router.structured(
-        task,
-        [{"role": "user", "content": prompt}],
-        Critique,
-    )
-
-    draft = state.get("draft")
-    at_max = revisions + 1 >= effective_max_revisions
-    shallow = _is_shallow_draft(
-        draft,
-        min_markdown_chars=profile.critic_min_markdown_chars,
-        min_substantive_sections=profile.critic_min_substantive_sections,
-    )
-    # Only downgrade approval if we still have revisions left to expand; at max
-    # revisions the draft finalizes regardless of depth.
-    approved = critique.approved and (not shallow or at_max)
-    directives = list(critique.directives)
-    if (
-        shallow
-        and not at_max
-        and not _has_expand_directive(critique)
-        and not _has_evidence_gap(critique)
-    ):
-        directives.append(
-            "expand: draft is too short; expand each section with more "
-            "evidence-grounded analysis and add missing sections."
+    span = get_tracer().span(trace_id, name="critic", input={"revisions": state.get("revisions", 0)})
+    try:
+        selected_router = llm_router or default_router
+        depth = normalize_depth(state.get("depth"))
+        profile = profile_for_depth(depth)
+        revisions = state.get("revisions", 0)
+        effective_max_revisions = settings.AGENT_MAX_REVISIONS + profile.extra_revisions
+        task = "critic_final" if revisions + 1 >= effective_max_revisions else "critic_inner"
+        prompt = renderer.render(
+            "critic.j2",
+            topic=state["topic"],
+            depth=depth,
+            draft=state.get("draft"),
+            findings=state.get("findings", []),
+            guardrail_report=state.get("guardrail_report"),
+            revisions=revisions,
+            max_revisions=effective_max_revisions,
+            min_markdown_chars=profile.critic_min_markdown_chars,
+            min_substantive_sections=profile.critic_min_substantive_sections,
+        )
+        critique = await selected_router.structured(
+            task,
+            [{"role": "user", "content": prompt}],
+            Critique,
         )
 
-    if approved or at_max:
-        next_action = "memory_writer"
-    elif _has_evidence_gap(critique):
-        next_action = "researcher"
-    else:
-        next_action = "synthesizer"
+        draft = state.get("draft")
+        at_max = revisions + 1 >= effective_max_revisions
+        shallow = _is_shallow_draft(
+            draft,
+            min_markdown_chars=profile.critic_min_markdown_chars,
+            min_substantive_sections=profile.critic_min_substantive_sections,
+        )
+        approved = critique.approved and (not shallow or at_max)
+        directives = list(critique.directives)
+        if (
+            shallow
+            and not at_max
+            and not _has_expand_directive(critique)
+            and not _has_evidence_gap(critique)
+        ):
+            directives.append(
+                "expand: draft is too short; expand each section with more "
+                "evidence-grounded analysis and add missing sections."
+            )
 
-    return {
-        "depth": depth,
-        "critique": critique,
-        "approved": approved,
-        "revisions": revisions + 1,
-        "revision_directives": directives,
-        "next_action": next_action,
-    }
+        if approved or at_max:
+            next_action = "memory_writer"
+        elif _has_evidence_gap(critique):
+            next_action = "researcher"
+        else:
+            next_action = "synthesizer"
+
+        result: AgentState = {
+            "depth": depth,
+            "critique": critique,
+            "approved": approved,
+            "revisions": revisions + 1,
+            "revision_directives": directives,
+            "next_action": next_action,
+        }
+        get_tracer().end_span(span, output={"approved": approved, "next_action": next_action})
+        return result
+    except Exception as exc:
+        get_tracer().end_span(span, error=str(exc))
+        raise

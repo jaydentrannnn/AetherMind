@@ -9,34 +9,13 @@ through ``app.llm.router`` rather than using this client directly so that task
 from __future__ import annotations
 
 import json
-import logging
 import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
-# region debug log helper
-_DEBUG_LOG_PATH = Path(__file__).resolve().parents[3] / "debug-be98c3.log"
-
-
-def _dbg(hid: str, loc: str, msg: str, data: dict[str, Any]) -> None:
-    """Append one NDJSON line to the debug log; swallow all errors."""
-    try:
-        payload = {
-            "sessionId": "be98c3",
-            "hypothesisId": hid,
-            "location": loc,
-            "message": msg,
-            "data": data,
-            "timestamp": int(time.time() * 1000),
-        }
-        with _DEBUG_LOG_PATH.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(payload, default=str) + "\n")
-    except Exception:
-        pass
-# endregion
+import structlog
 
 try:
     import litellm
@@ -78,7 +57,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.config import settings
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 if litellm is not None:
     litellm.drop_params = True
@@ -182,81 +161,52 @@ class LLMClient:
             kwargs.setdefault("keep_alive", settings.OLLAMA_KEEP_ALIVE)
         kwargs.update(extra)
 
-        # region agent log
         task_tag = (metadata or {}).get("task") if metadata else None
         prompt_chars = sum(len(str(m.get("content", ""))) for m in messages)
-        has_rf = response_format is not None
-        _dbg(
-            "H1",
-            "client.py:chat:enter",
+        logger.debug(
             "llm_call_start",
-            {
-                "task": task_tag,
-                "model": model,
-                "timeout": kwargs["timeout"],
-                "num_retries": kwargs["num_retries"],
-                "msg_count": len(messages),
-                "prompt_chars": prompt_chars,
-                "has_response_format": has_rf,
-                "max_tokens": max_tokens,
-            },
+            task=task_tag,
+            model=model,
+            msg_count=len(messages),
+            prompt_chars=prompt_chars,
+            has_response_format=response_format is not None,
+            max_tokens=max_tokens,
         )
         t0 = time.monotonic()
-        # endregion
 
         try:
             response = await acompletion(**kwargs)
         except _NON_RETRYABLE as e:
-            # region agent log
-            _dbg(
-                "H1",
-                "client.py:chat:non_retryable",
+            logger.debug(
                 "llm_call_non_retryable_error",
-                {
-                    "task": task_tag,
-                    "model": model,
-                    "duration_s": round(time.monotonic() - t0, 2),
-                    "exc_type": type(e).__name__,
-                    "exc_msg": str(e)[:400],
-                },
+                task=task_tag,
+                model=model,
+                duration_s=round(time.monotonic() - t0, 2),
+                exc_type=type(e).__name__,
             )
-            # endregion
             raise
         except APIError as e:
-            # region agent log
-            _dbg(
-                "H1",
-                "client.py:chat:api_error",
+            logger.warning(
                 "llm_call_api_error",
-                {
-                    "task": task_tag,
-                    "model": model,
-                    "duration_s": round(time.monotonic() - t0, 2),
-                    "exc_type": type(e).__name__,
-                    "exc_msg": str(e)[:400],
-                },
+                task=task_tag,
+                model=model,
+                duration_s=round(time.monotonic() - t0, 2),
+                exc_type=type(e).__name__,
+                error=str(e)[:400],
             )
-            # endregion
-            logger.warning("LLM call failed: %s", e)
             raise
 
-        # region agent log
         try:
             content_len = len((response.choices[0].message.content or ""))
         except Exception:
             content_len = -1
-        _dbg(
-            "H1",
-            "client.py:chat:ok",
+        logger.debug(
             "llm_call_ok",
-            {
-                "task": task_tag,
-                "model": model,
-                "duration_s": round(time.monotonic() - t0, 2),
-                "content_chars": content_len,
-            },
+            task=task_tag,
+            model=model,
+            duration_s=round(time.monotonic() - t0, 2),
+            content_chars=content_len,
         )
-        # endregion
         return self._to_chat_response(response, model, metadata)
 
     async def structured(
@@ -345,21 +295,13 @@ class LLMClient:
 
         _ollama_timeout = kwargs.pop("timeout", 180.0)
         for attempt in range(2):
-            # region agent log
-            _dbg(
-                "H3",
-                "client.py:_structured_ollama:attempt",
+            logger.debug(
                 "ollama_structured_attempt",
-                {
-                    "model": model,
-                    "schema": schema.__name__,
-                    "attempt": attempt,
-                    "timeout": _ollama_timeout,
-                    "sys_prompt_chars": len(system_content),
-                    "has_no_think_tag": "/no_think" in system_content,
-                },
+                model=model,
+                schema=schema.__name__,
+                attempt=attempt,
+                timeout=_ollama_timeout,
             )
-            # endregion
             resp = await self.chat(
                 messages,
                 model=model,
@@ -368,20 +310,14 @@ class LLMClient:
                 **kwargs,
             )
             content = _strip_think_tags(resp.content)
-            # region agent log
-            _dbg(
-                "H3",
-                "client.py:_structured_ollama:post_chat",
+            logger.debug(
                 "ollama_structured_content",
-                {
-                    "model": model,
-                    "attempt": attempt,
-                    "raw_chars": len(resp.content or ""),
-                    "stripped_chars": len(content),
-                    "starts_with": (content[:60] if content else ""),
-                },
+                model=model,
+                attempt=attempt,
+                raw_chars=len(resp.content or ""),
+                stripped_chars=len(content),
+                starts_with=(content[:60] if content else ""),
             )
-            # endregion
             # Extract first JSON object/array if the model wrapped it in extra text
             m = re.search(r"\{.*\}", content, re.DOTALL)
             if m:
