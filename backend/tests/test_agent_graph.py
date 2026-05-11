@@ -46,9 +46,9 @@ class FakeRouter:
 class FakeMemoryService:
     """No-op memory service test double for graph integration tests."""
 
-    async def recall(self, topic: str):  # noqa: ANN001
+    async def recall(self, topic: str, *, user_id: str | None = None):  # noqa: ANN001
         """Return empty memory context without touching external stores."""
-        del topic
+        del topic, user_id
         return {
             "preferences": {},
             "allow_domains": [],

@@ -23,9 +23,9 @@ class FakeRouter:
 class FakeMemoryService:
     """Return empty memory context for planner tests."""
 
-    async def recall(self, topic: str):  # noqa: ANN001
+    async def recall(self, topic: str, *, user_id: str | None = None):  # noqa: ANN001
         """Return stable empty recall payload."""
-        del topic
+        del topic, user_id
         return {
             "preferences": {},
             "allow_domains": [],

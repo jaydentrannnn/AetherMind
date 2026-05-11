@@ -31,8 +31,28 @@ async def lifespan(app: FastAPI):
     )
     try:
         import litellm  # type: ignore[import-not-found]
+        # LiteLLM's Langfuse integration expects `langfuse.version.__version__`.
+        # Some Langfuse SDK builds import fine but don't expose that module; in that
+        # case, we must avoid enabling the callback or jobs can crash mid-run.
+        callbacks = list(getattr(litellm, "success_callback", []) or [])
+        if "langfuse" in callbacks:
+            try:
+                import langfuse  # type: ignore[import-not-found]
+
+                _ = langfuse.version.__version__  # type: ignore[attr-defined]
+            except Exception:
+                callbacks = [c for c in callbacks if c != "langfuse"]
         if settings.LANGFUSE_PUBLIC_KEY and settings.LANGFUSE_SECRET_KEY:
-            litellm.success_callback = ["langfuse"]
+            try:
+                import langfuse  # type: ignore[import-not-found]
+
+                _ = langfuse.version.__version__  # type: ignore[attr-defined]
+                callbacks = [c for c in callbacks if c != "langfuse"] + ["langfuse"]
+            except Exception:
+                callbacks = [c for c in callbacks if c != "langfuse"]
+        else:
+            callbacks = [c for c in callbacks if c != "langfuse"]
+        litellm.success_callback = callbacks
     except Exception:
         pass
     yield

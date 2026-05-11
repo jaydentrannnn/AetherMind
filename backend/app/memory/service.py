@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 from app.agent.depth import normalize_depth
+from app.config import settings
 from app.llm.router import Router, router as default_router
 from app.memory import sqlite_store
 from app.schemas import GuardrailReport, PreferenceDeltaList, RecalledMemory, Report, Rubric, Source
@@ -34,7 +35,7 @@ class MemoryService:
 
     async def recall(self, topic: str, *, user_id: str | None = None) -> dict[str, Any]:
         """Return planner-ready memory context with stable keys and defaults."""
-        resolved_user_id = user_id or sqlite_store.ensure_default_user()
+        resolved_user_id = self._resolve_user_id(user_id)
         preferences = sqlite_store.get_preferences(resolved_user_id)
         allow_domains, deny_domains = sqlite_store.get_domain_lists(resolved_user_id)
         semantic_preferences = await self._vector_store.query_preferences(topic, resolved_user_id, k=5)
@@ -53,7 +54,11 @@ class MemoryService:
     async def write(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Persist report tree and feedback-derived preference deltas."""
         draft = payload.get("draft")
-        user_id = payload.get("user_id") or sqlite_store.ensure_default_user()
+        if isinstance(draft, dict):
+            # LangGraph checkpoints/state reducers may coerce Pydantic models into plain dicts.
+            # We accept both shapes to keep persistence stable across runtimes and tests.
+            draft = Report.model_validate(draft)
+        user_id = self._resolve_user_id(payload.get("user_id"))
         report_id: str | None = None
         claims_persisted = 0
         if isinstance(draft, Report):
@@ -125,6 +130,20 @@ class MemoryService:
             "claims_persisted": claims_persisted,
             "prefs_extracted": len(deltas.deltas),
         }
+
+    @staticmethod
+    def _resolve_user_id(user_id: str | None) -> str:
+        """Resolve an incoming user identifier into the SQLite `users.id` UUID string.
+
+        The API and tests commonly pass a stable username (e.g. `"default"`). The
+        persistence layer uses UUID primary keys, so we normalize usernames into
+        real user rows before recall/write.
+        """
+        if not user_id or user_id == settings.DEFAULT_USER_NAME:
+            return sqlite_store.ensure_default_user()
+        if sqlite_store.user_exists(str(user_id)):
+            return str(user_id)
+        return sqlite_store.ensure_user(str(user_id))
 
 
 @lru_cache(maxsize=1)

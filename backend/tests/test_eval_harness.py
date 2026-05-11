@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from app.config import settings
-from app.eval.harness import run_eval
+from app.eval.harness import run_eval, run_stage_eval
 from app.eval.judge import EvalJudge, JudgeResult, JudgeRubric
 
 
@@ -91,3 +91,78 @@ async def test_run_eval_includes_judge_scores_when_enabled(
     report = await run_eval(fixtures_path=str(fixture_path))
     assert report.summary.deterministic_only is False
     assert report.summary.avg_judge_score == 4.0
+
+
+async def test_run_stage_eval_planner_mock_llm_runs_without_network(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Planner stage with --mock-llm should pass deterministic band checks."""
+    monkeypatch.setattr(settings, "MODEL_EVAL_JUDGE", None)
+    report = await run_stage_eval(stages=["planner"], mock_llm=True, deterministic_only=True)
+    assert "planner" in report.stages
+    planner_summary = report.summary.stages["planner"]
+    assert planner_summary.total_cases > 0
+    assert planner_summary.pass_rate == 1.0
+    assert report.summary.deterministic_only is True
+    assert report.results == []
+
+
+async def test_run_stage_eval_researcher_uses_stub_tools(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Researcher stage should produce findings via stubbed tools without LLM."""
+    monkeypatch.setattr(settings, "MODEL_EVAL_JUDGE", None)
+    report = await run_stage_eval(
+        stages=["researcher"], mock_llm=True, deterministic_only=True
+    )
+    researcher_summary = report.summary.stages["researcher"]
+    assert researcher_summary.total_cases > 0
+    assert researcher_summary.pass_rate == 1.0
+    assert researcher_summary.failures == []
+
+
+async def test_run_stage_eval_synthesizer_mock_llm_satisfies_closure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Synth stage with mock router should pass citation closure checks."""
+    monkeypatch.setattr(settings, "MODEL_EVAL_JUDGE", None)
+    report = await run_stage_eval(
+        stages=["synthesizer"], mock_llm=True, deterministic_only=True
+    )
+    synth_summary = report.summary.stages["synthesizer"]
+    assert synth_summary.total_cases > 0
+    for row in report.stages["synthesizer"].results:
+        assert row.deterministic["citation_closure_ok"] is True
+
+
+async def test_run_stage_eval_guardrails_matches_labeled_outcomes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Guardrails stage should match expected policy / closure violation counts."""
+    monkeypatch.setattr(settings, "MODEL_EVAL_JUDGE", None)
+    report = await run_stage_eval(
+        stages=["guardrails"], mock_llm=False, deterministic_only=True
+    )
+    guard_summary = report.summary.stages["guardrails"]
+    assert guard_summary.total_cases > 0
+    assert guard_summary.pass_rate == 1.0
+
+
+async def test_run_stage_eval_critic_routing_with_mock_critique(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Critic stage with mock_llm should match expected next_action labels."""
+    monkeypatch.setattr(settings, "MODEL_EVAL_JUDGE", None)
+    report = await run_stage_eval(
+        stages=["critic"], mock_llm=True, deterministic_only=True
+    )
+    critic_summary = report.summary.stages["critic"]
+    assert critic_summary.total_cases > 0
+    assert critic_summary.pass_rate == 1.0
+
+
+async def test_run_stage_eval_rejects_unknown_stage(monkeypatch: pytest.MonkeyPatch) -> None:
+    """run_stage_eval should raise for unrecognized stage names."""
+    del monkeypatch
+    with pytest.raises(ValueError):
+        await run_stage_eval(stages=["nonsense"], mock_llm=True, deterministic_only=True)

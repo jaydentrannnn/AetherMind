@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
@@ -10,11 +11,15 @@ export function TopNav(): JSX.Element {
   return (
     <header className="flex h-[var(--nav-h)] items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--surface)] px-5">
       <div className="flex items-center gap-5">
-        <Link className="flex items-center gap-2 font-semibold" href="/">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-[var(--accent-bg)] text-[var(--accent-token)]">
-            A
-          </span>
-          AetherMind
+        <Link className="flex shrink-0 items-center" href="/">
+          <Image
+            src="/AetherMindLogo.png"
+            alt="AetherMind"
+            width={160}
+            height={64}
+            className="h-11 w-auto object-contain object-left"
+            priority
+          />
         </Link>
         <nav className="flex items-center gap-2 text-sm">
           <Link

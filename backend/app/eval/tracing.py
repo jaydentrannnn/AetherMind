@@ -43,23 +43,41 @@ class LangfuseEvalTracer(EvalTracer):
         self._client: Any | None = None
 
     def _get_client(self) -> Any | None:
-        """Instantiate and memoize the Langfuse client if available/configured."""
+        """Instantiate and memoize the Langfuse client if available/configured.
+
+        Langfuse is optional in this repo. Some SDK versions may import
+        successfully but not provide the methods we rely on; we treat that as
+        "Langfuse unavailable" to keep the eval harness deterministic and
+        test-friendly.
+        """
         if self._client is not None:
             return self._client
         if not settings.LANGFUSE_PUBLIC_KEY or not settings.LANGFUSE_SECRET_KEY:
             return None
         if self._factory is not None:
-            self._client = self._factory()
-            return self._client
+            try:
+                client = self._factory()
+            except Exception:
+                return None
+            if not hasattr(client, "trace") or not hasattr(client, "span"):
+                return None
+            self._client = client
+            return client
         try:
             from langfuse import Langfuse  # type: ignore[import-not-found]
         except Exception:
             return None
-        self._client = Langfuse(
-            public_key=settings.LANGFUSE_PUBLIC_KEY,
-            secret_key=settings.LANGFUSE_SECRET_KEY,
-            host=settings.LANGFUSE_HOST or "https://cloud.langfuse.com",
-        )
+        try:
+            client = Langfuse(
+                public_key=settings.LANGFUSE_PUBLIC_KEY,
+                secret_key=settings.LANGFUSE_SECRET_KEY,
+                host=settings.LANGFUSE_HOST or "https://cloud.langfuse.com",
+            )
+        except Exception:
+            return None
+        if not hasattr(client, "trace") or not hasattr(client, "span"):
+            return None
+        self._client = client
         return self._client
 
     def start_run(self, *, total_cases: int, deterministic_only: bool, fixtures_path: str) -> None:
@@ -67,14 +85,17 @@ class LangfuseEvalTracer(EvalTracer):
         client = self._get_client()
         if client is None:
             return
-        trace = client.trace(
-            name="eval_harness_run",
-            metadata={
-                "total_cases": total_cases,
-                "deterministic_only": deterministic_only,
-                "fixtures_path": fixtures_path,
-            },
-        )
+        try:
+            trace = client.trace(
+                name="eval_harness_run",
+                metadata={
+                    "total_cases": total_cases,
+                    "deterministic_only": deterministic_only,
+                    "fixtures_path": fixtures_path,
+                },
+            )
+        except Exception:
+            return
         self._run_id = getattr(trace, "id", None)
 
     def start_case(self, *, case_id: str) -> dict[str, Any]:
@@ -82,7 +103,10 @@ class LangfuseEvalTracer(EvalTracer):
         client = self._get_client()
         if client is None or self._run_id is None:
             return {}
-        span = client.span(trace_id=self._run_id, name="eval_case", metadata={"case_id": case_id})
+        try:
+            span = client.span(trace_id=self._run_id, name="eval_case", metadata={"case_id": case_id})
+        except Exception:
+            return {}
         return {"span": span}
 
     def end_case(self, span: dict[str, Any], *, metrics: dict[str, float], judge_enabled: bool) -> None:
@@ -98,8 +122,14 @@ class LangfuseEvalTracer(EvalTracer):
         if client is None:
             return
         if self._run_id is not None:
-            client.trace(id=self._run_id, output=summary)
-        client.flush()
+            try:
+                client.trace(id=self._run_id, output=summary)
+            except Exception:
+                return
+        try:
+            client.flush()
+        except Exception:
+            return
 
 
 def build_eval_tracer() -> EvalTracer:

@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     MODEL_EVAL_JUDGE: Optional[str] = None
     MODEL_SOURCE_SUMMARY: Optional[str] = None
     MODEL_TOOL_FORMAT: Optional[str] = None
+    MODEL_PLANNER_JUDGE: Optional[str] = None
+    MODEL_RESEARCHER_JUDGE: Optional[str] = None
+    MODEL_SYNTH_JUDGE: Optional[str] = None
+    MODEL_CRITIC_JUDGE: Optional[str] = None
 
     # --- Embeddings ---
     EMBEDDINGS_PROVIDER: str = "sentence-transformers"

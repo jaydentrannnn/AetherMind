@@ -1,0 +1,96 @@
+[
+  {
+    "case_id": "researcher-basic-two-tools",
+    "topic": "Transformer scaling laws",
+    "depth": "standard",
+    "sub_question": {
+      "id": "sq-1",
+      "question": "What empirical scaling laws govern transformer training loss?",
+      "suggested_tools": ["web_search", "arxiv_search"]
+    },
+    "stub_tools": {
+      "web_search": {
+        "content": "Empirical work shows transformer training loss follows a power law in model size, dataset size, and compute (Kaplan et al. 2020).",
+        "source": {
+          "source_type": "web_search",
+          "title": "Scaling Laws Overview",
+          "url_or_doi": "https://example.org/scaling-laws",
+          "snippet": "Training loss follows a power law in model size, dataset size, and compute."
+        }
+      },
+      "arxiv_search": {
+        "content": "Hoffmann et al. (2022) revised compute-optimal scaling, recommending more training tokens per parameter than Kaplan et al.",
+        "source": {
+          "source_type": "arxiv",
+          "title": "Chinchilla compute-optimal scaling",
+          "url_or_doi": "https://arxiv.org/abs/2203.15556",
+          "snippet": "Compute-optimal LLMs need more tokens per parameter than previously believed."
+        }
+      }
+    },
+    "expected": {
+      "min_sources": 2,
+      "min_evidence_lines": 2
+    }
+  },
+  {
+    "case_id": "researcher-single-tool",
+    "topic": "Vector database trade-offs",
+    "depth": "quick",
+    "sub_question": {
+      "id": "sq-2",
+      "question": "How do approximate-nearest-neighbor index types compare for vector databases?",
+      "suggested_tools": ["web_search"]
+    },
+    "stub_tools": {
+      "web_search": {
+        "content": "HNSW offers low-latency recall trade-offs; IVF-PQ trades recall for memory; DiskANN scales to billions on SSDs.",
+        "source": {
+          "source_type": "web_search",
+          "title": "ANN index comparison",
+          "url_or_doi": "https://example.org/ann",
+          "snippet": "HNSW, IVF-PQ, and DiskANN differ in recall, memory, and latency trade-offs."
+        }
+      }
+    },
+    "expected": {
+      "min_sources": 1,
+      "min_evidence_lines": 1
+    }
+  },
+  {
+    "case_id": "researcher-duplicate-urls",
+    "topic": "RAG citation grounding",
+    "depth": "standard",
+    "sub_question": {
+      "id": "sq-3",
+      "question": "Why does retrieval-augmented generation reduce hallucinations?",
+      "suggested_tools": ["web_search", "arxiv_search"]
+    },
+    "stub_tools": {
+      "web_search": {
+        "content": "RAG grounds generated text in retrieved passages, reducing unsupported claims.",
+        "source": {
+          "source_type": "web_search",
+          "title": "RAG primer",
+          "url_or_doi": "https://example.org/rag-primer",
+          "snippet": "RAG grounds generation in retrieved passages."
+        }
+      },
+      "arxiv_search": {
+        "content": "Lewis et al. (2020) show that grounding generations in retrieved passages reduces hallucination rates.",
+        "source": {
+          "source_type": "arxiv",
+          "title": "Retrieval-Augmented Generation",
+          "url_or_doi": "https://example.org/rag-primer",
+          "snippet": "Grounding generation in retrieval reduces hallucinations."
+        }
+      }
+    },
+    "expected": {
+      "min_sources": 2,
+      "min_evidence_lines": 2,
+      "dedup_url": "https://example.org/rag-primer"
+    }
+  }
+]

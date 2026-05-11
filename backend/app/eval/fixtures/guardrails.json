@@ -1,0 +1,123 @@
+[
+  {
+    "case_id": "guard-allow-pass",
+    "memory_context": {"allow_domains": ["example.org"], "deny_domains": []},
+    "sources": [
+      {
+        "id": "src-allow-1",
+        "source_type": "web_search",
+        "title": "Allowed source",
+        "url_or_doi": "https://example.org/article",
+        "snippet": "Allowed evidence snippet about tests."
+      }
+    ],
+    "draft": {
+      "title": "Allowed report",
+      "summary": "Short summary",
+      "markdown": "Tests catch regressions.",
+      "sections": [
+        {
+          "title": "Body",
+          "content": "Allowed evidence snippet about tests.",
+          "claims": [
+            {
+              "text": "Allowed evidence snippet about tests.",
+              "confidence": 0.9,
+              "citations": [
+                {
+                  "source_id": "src-allow-1",
+                  "snippet": "Allowed evidence snippet about tests."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "policy_violations": 0,
+      "closure_violations": 0,
+      "min_verified_claims": 1
+    }
+  },
+  {
+    "case_id": "guard-deny-blocks",
+    "memory_context": {"allow_domains": [], "deny_domains": ["blocked.com"]},
+    "sources": [
+      {
+        "id": "src-denied",
+        "source_type": "web_search",
+        "title": "Denied source",
+        "url_or_doi": "https://blocked.com/page",
+        "snippet": "Should be blocked by deny list."
+      }
+    ],
+    "draft": {
+      "title": "Report with denied citation",
+      "summary": "S",
+      "markdown": "Body uses denied source.",
+      "sections": [
+        {
+          "title": "Body",
+          "content": "Body uses denied source.",
+          "claims": [
+            {
+              "text": "Should be blocked by deny list.",
+              "confidence": 0.5,
+              "citations": [
+                {
+                  "source_id": "src-denied",
+                  "snippet": "Should be blocked by deny list."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "policy_violations": 1,
+      "closure_violations": 1
+    }
+  },
+  {
+    "case_id": "guard-unknown-citation",
+    "memory_context": {"allow_domains": [], "deny_domains": []},
+    "sources": [
+      {
+        "id": "src-known",
+        "source_type": "web_search",
+        "title": "Known source",
+        "url_or_doi": "https://example.org/known",
+        "snippet": "Known evidence."
+      }
+    ],
+    "draft": {
+      "title": "Report with fake citation",
+      "summary": "S",
+      "markdown": "Body cites a nonexistent source.",
+      "sections": [
+        {
+          "title": "Body",
+          "content": "Body cites a nonexistent source.",
+          "claims": [
+            {
+              "text": "Fabricated claim",
+              "confidence": 0.1,
+              "citations": [
+                {
+                  "source_id": "src-does-not-exist",
+                  "snippet": "fabricated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "policy_violations": 0,
+      "closure_violations": 1
+    }
+  }
+]

@@ -51,15 +51,27 @@ def _normalized_markdown(report: Report) -> str:
 
 def ensure_default_user() -> str:
     """Return the default user id, creating the row on first use."""
+    return ensure_user(settings.DEFAULT_USER_NAME)
+
+
+def ensure_user(user_name: str) -> str:
+    """Return a user id for the given user name, creating the row if needed."""
+    normalized = str(user_name or "").strip() or settings.DEFAULT_USER_NAME
     with db.SessionLocal() as session:
-        existing = session.scalar(select(User).where(User.name == settings.DEFAULT_USER_NAME))
+        existing = session.scalar(select(User).where(User.name == normalized))
         if existing is not None:
             return existing.id
-        user = User(name=settings.DEFAULT_USER_NAME)
+        user = User(name=normalized)
         session.add(user)
         session.commit()
         session.refresh(user)
         return user.id
+
+
+def user_exists(user_id: str) -> bool:
+    """Return whether a user row exists with the provided primary-key id."""
+    with db.SessionLocal() as session:
+        return session.scalar(select(User.id).where(User.id == user_id)) is not None
 
 
 def get_preferences(user_id: str) -> dict[str, str]:

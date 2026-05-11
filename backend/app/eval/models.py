@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from app.eval.judge import JudgeResult
@@ -44,21 +46,57 @@ class EvalCaseResult(BaseModel):
     judge: JudgeResult
 
 
+class StageCaseResult(BaseModel):
+    """Per-case result for one node-stage eval.
+
+    `deterministic` is a free-form dict of metric/check names to numeric or
+    boolean values produced by the stage runner. `diagnostics` captures
+    human-readable reasons for any failed deterministic checks so the JSON
+    report is debuggable without re-running the suite.
+    """
+
+    case_id: str
+    passed: bool
+    deterministic: dict[str, Any] = Field(default_factory=dict)
+    diagnostics: list[str] = Field(default_factory=list)
+    judge: JudgeResult | None = None
+
+
+class StageSummary(BaseModel):
+    """Aggregate scores and metadata for one stage's eval run."""
+
+    stage: str
+    total_cases: int
+    pass_rate: float
+    avg_judge_score: float | None = None
+    failures: list[str] = Field(default_factory=list)
+    deterministic_only: bool = False
+
+
+class StageReport(BaseModel):
+    """Full report for one stage: summary plus per-case results."""
+
+    summary: StageSummary
+    results: list[StageCaseResult] = Field(default_factory=list)
+
+
 class EvalRunSummary(BaseModel):
     """Aggregate scores and metadata for a full eval run."""
 
     total_cases: int
     deterministic_only: bool
     fixtures_path: str
-    avg_faithfulness: float
-    avg_answer_relevance: float
-    avg_citation_precision: float
-    avg_deterministic_score: float
+    avg_faithfulness: float = 0.0
+    avg_answer_relevance: float = 0.0
+    avg_citation_precision: float = 0.0
+    avg_deterministic_score: float = 0.0
     avg_judge_score: float | None = None
+    stages: dict[str, StageSummary] = Field(default_factory=dict)
 
 
 class EvalRunReport(BaseModel):
     """Top-level JSON report emitted by the harness CLI."""
 
     summary: EvalRunSummary
-    results: list[EvalCaseResult]
+    results: list[EvalCaseResult] = Field(default_factory=list)
+    stages: dict[str, StageReport] = Field(default_factory=dict)

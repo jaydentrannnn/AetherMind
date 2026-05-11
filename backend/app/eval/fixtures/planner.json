@@ -1,0 +1,50 @@
+[
+  {
+    "case_id": "planner-quick-tests",
+    "topic": "Benefits of automated tests in modern software teams",
+    "depth": "quick",
+    "memory_context": null,
+    "expected": {
+      "min_subquestions": 3,
+      "max_subquestions": 3,
+      "max_pairwise_jaccard": 0.8
+    }
+  },
+  {
+    "case_id": "planner-standard-llm-eval",
+    "topic": "How to evaluate large language model agents end to end",
+    "depth": "standard",
+    "memory_context": null,
+    "expected": {
+      "min_subquestions": 4,
+      "max_subquestions": 6,
+      "max_pairwise_jaccard": 0.8
+    }
+  },
+  {
+    "case_id": "planner-deep-rag",
+    "topic": "Best practices for production retrieval augmented generation systems",
+    "depth": "deep",
+    "memory_context": null,
+    "expected": {
+      "min_subquestions": 6,
+      "max_subquestions": 8,
+      "max_pairwise_jaccard": 0.8
+    }
+  },
+  {
+    "case_id": "planner-memory-bias",
+    "topic": "Recent advances in protein folding prediction",
+    "depth": "standard",
+    "memory_context": {
+      "preferences": {"style": "primary literature only"},
+      "allow_domains": ["arxiv.org", "nature.com"],
+      "deny_domains": ["reddit.com"]
+    },
+    "expected": {
+      "min_subquestions": 4,
+      "max_subquestions": 6,
+      "max_pairwise_jaccard": 0.8
+    }
+  }
+]

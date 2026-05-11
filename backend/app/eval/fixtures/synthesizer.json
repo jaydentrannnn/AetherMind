@@ -1,0 +1,67 @@
+[
+  {
+    "case_id": "synth-basic-two-findings",
+    "topic": "Transformer scaling laws",
+    "depth": "standard",
+    "sources": [
+      {
+        "id": "src-scaling-1",
+        "source_type": "web_search",
+        "title": "Scaling Laws Overview",
+        "url_or_doi": "https://example.org/scaling-laws",
+        "snippet": "Training loss follows a power law in model size, dataset size, and compute."
+      },
+      {
+        "id": "src-chinchilla",
+        "source_type": "arxiv",
+        "title": "Chinchilla compute-optimal scaling",
+        "url_or_doi": "https://arxiv.org/abs/2203.15556",
+        "snippet": "Compute-optimal LLMs need more tokens per parameter than previously believed."
+      }
+    ],
+    "findings": [
+      {
+        "sub_question_id": "sq-1",
+        "answer": "Transformer training loss follows a power law in model size, dataset size, and compute.",
+        "evidence": ["Power law in model size, dataset size, and compute."],
+        "source_ids": ["src-scaling-1"]
+      },
+      {
+        "sub_question_id": "sq-2",
+        "answer": "Compute-optimal training uses more tokens per parameter than Kaplan-style scaling.",
+        "evidence": ["Compute-optimal LLMs need more tokens per parameter."],
+        "source_ids": ["src-chinchilla"]
+      }
+    ],
+    "revision_directives": []
+  },
+  {
+    "case_id": "synth-revision-with-directives",
+    "topic": "RAG citation grounding",
+    "depth": "standard",
+    "sources": [
+      {
+        "id": "src-rag-1",
+        "source_type": "web_search",
+        "title": "RAG primer",
+        "url_or_doi": "https://example.org/rag-primer",
+        "snippet": "RAG grounds generation in retrieved passages."
+      }
+    ],
+    "findings": [
+      {
+        "sub_question_id": "sq-1",
+        "answer": "Retrieval-augmented generation reduces hallucinations by grounding output in retrieved passages.",
+        "evidence": ["RAG grounds generation in retrieved passages."],
+        "source_ids": ["src-rag-1"]
+      }
+    ],
+    "revision_directives": [
+      "expand: add a section on hallucination metrics",
+      "include trade-offs of retrieval latency"
+    ],
+    "expected": {
+      "directive_keywords": ["hallucination", "latency"]
+    }
+  }
+]

@@ -32,5 +32,757 @@
         "snippet": "Shared documentation keeps contributors aligned."
       }
     ]
+  },
+  {
+    "case_id": "smoke-3",
+    "question": "What is one benefit of automated tests?",
+    "answer": "Automated tests help catch regressions early.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Tests make changes safer by surfacing unintended breakages quickly."
+    ],
+    "citations": [
+      {
+        "source_id": "src-1",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-4",
+    "question": "How can good documentation improve onboarding?",
+    "answer": "Good documentation reduces onboarding friction for new team members.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Shared documentation keeps contributors aligned on architecture and APIs."
+    ],
+    "citations": [
+      {
+        "source_id": "src-2",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-5",
+    "question": "Why do tests make refactoring safer?",
+    "answer": "Tests make refactoring safer by increasing confidence and catching breaks.",
+    "contexts": [
+      "A strong test suite increases confidence when refactoring code.",
+      "Automated tests detect regressions early in the development cycle."
+    ],
+    "citations": [
+      {
+        "source_id": "src-3",
+        "snippet": "A strong test suite increases confidence when refactoring code."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-6",
+    "question": "Why does shared documentation help teams align?",
+    "answer": "Shared documentation helps keep contributors aligned on architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Clear documentation reduces onboarding friction for new team members."
+    ],
+    "citations": [
+      {
+        "source_id": "src-4",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-7",
+    "question": "What problem do automated tests help prevent?",
+    "answer": "They help prevent regressions by detecting breakages early.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "A strong test suite increases confidence when refactoring code."
+    ],
+    "citations": [
+      {
+        "source_id": "src-5",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-8",
+    "question": "What is one advantage of clear docs for a team?",
+    "answer": "Clear documentation aligns a team by establishing shared understanding.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Good docs reduce onboarding friction for new team members."
+    ],
+    "citations": [
+      {
+        "source_id": "src-6",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-9",
+    "question": "How do automated tests help during changes?",
+    "answer": "They catch regressions quickly during changes.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Tests make changes safer by surfacing unintended breakages quickly."
+    ],
+    "citations": [
+      {
+        "source_id": "src-7",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-10",
+    "question": "How does documentation reduce onboarding time?",
+    "answer": "Documentation reduces onboarding time by reducing friction for new team members.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Shared documentation keeps contributors aligned on architecture and APIs."
+    ],
+    "citations": [
+      {
+        "source_id": "src-8",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-11",
+    "question": "Why do teams write automated tests?",
+    "answer": "Teams write automated tests to catch regressions early and support safe refactoring.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "A strong test suite increases confidence when refactoring code."
+    ],
+    "citations": [
+      {
+        "source_id": "src-9",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      },
+      {
+        "source_id": "src-10",
+        "snippet": "A strong test suite increases confidence when refactoring code."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-12",
+    "question": "What is a benefit of keeping docs up to date?",
+    "answer": "Up-to-date docs keep contributors aligned on architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Good docs reduce onboarding friction for new team members."
+    ],
+    "citations": [
+      {
+        "source_id": "src-11",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-13",
+    "question": "How do tests affect refactoring risk?",
+    "answer": "A strong test suite reduces refactoring risk by increasing confidence.",
+    "contexts": [
+      "A strong test suite increases confidence when refactoring code.",
+      "Automated tests detect regressions early in the development cycle."
+    ],
+    "citations": [
+      {
+        "source_id": "src-12",
+        "snippet": "A strong test suite increases confidence when refactoring code."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-14",
+    "question": "What does shared documentation help contributors do?",
+    "answer": "It helps contributors stay aligned on architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Good docs reduce onboarding friction for new team members."
+    ],
+    "citations": [
+      {
+        "source_id": "src-13",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-15",
+    "question": "What benefit do automated tests provide in development cycles?",
+    "answer": "They detect regressions early in the development cycle.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "A strong test suite increases confidence when refactoring code."
+    ],
+    "citations": [
+      {
+        "source_id": "src-14",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-16",
+    "question": "How can documentation help with team coordination?",
+    "answer": "Documentation helps coordination by keeping contributors aligned.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Clear documentation aligns teams and reduces onboarding time."
+    ],
+    "citations": [
+      {
+        "source_id": "src-15",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-17",
+    "question": "What is a testing-related way to improve change safety?",
+    "answer": "Use automated tests to catch regressions quickly when making changes.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Tests make changes safer by surfacing unintended breakages quickly."
+    ],
+    "citations": [
+      {
+        "source_id": "src-16",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-18",
+    "question": "Why do docs matter for new contributors?",
+    "answer": "Docs matter because they reduce onboarding friction for new team members.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Shared documentation keeps contributors aligned on architecture and APIs."
+    ],
+    "citations": [
+      {
+        "source_id": "src-17",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-19",
+    "question": "How do tests help maintain code quality over time?",
+    "answer": "They help by catching regressions early and making refactors safer.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "A strong test suite increases confidence when refactoring code."
+    ],
+    "citations": [
+      {
+        "source_id": "src-18",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      },
+      {
+        "source_id": "src-19",
+        "snippet": "A strong test suite increases confidence when refactoring code."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-20",
+    "question": "What do clear docs provide besides onboarding help?",
+    "answer": "They provide alignment by documenting architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Good docs reduce onboarding friction for new team members."
+    ],
+    "citations": [
+      {
+        "source_id": "src-20",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-21",
+    "question": "How do automated tests support fast iteration?",
+    "answer": "They support fast iteration by catching regressions quickly.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Tests make changes safer by surfacing unintended breakages quickly."
+    ],
+    "citations": [
+      {
+        "source_id": "src-21",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-22",
+    "question": "How do docs help reduce confusion in teams?",
+    "answer": "Docs reduce confusion by keeping contributors aligned on shared architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Shared understanding reduces coordination overhead."
+    ],
+    "citations": [
+      {
+        "source_id": "src-22",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-23",
+    "question": "What is a key outcome of having a strong test suite?",
+    "answer": "A strong test suite increases confidence when refactoring code.",
+    "contexts": [
+      "A strong test suite increases confidence when refactoring code.",
+      "Automated tests detect regressions early in the development cycle."
+    ],
+    "citations": [
+      {
+        "source_id": "src-23",
+        "snippet": "A strong test suite increases confidence when refactoring code."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-24",
+    "question": "What role does documentation play in alignment?",
+    "answer": "Documentation supports alignment by keeping contributors on the same architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Good docs reduce onboarding friction for new team members."
+    ],
+    "citations": [
+      {
+        "source_id": "src-24",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-25",
+    "question": "Why are regressions less likely with tests?",
+    "answer": "Because tests detect regressions early in the development cycle.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Early detection reduces the cost of fixes."
+    ],
+    "citations": [
+      {
+        "source_id": "src-25",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-26",
+    "question": "How do clear docs help with cross-team work?",
+    "answer": "They help cross-team work by keeping contributors aligned on architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Good docs reduce onboarding friction for new team members."
+    ],
+    "citations": [
+      {
+        "source_id": "src-26",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-27",
+    "question": "What testing benefit helps with maintenance?",
+    "answer": "Catching regressions early helps with maintenance.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Maintenance is easier when regressions are detected early."
+    ],
+    "citations": [
+      {
+        "source_id": "src-27",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-28",
+    "question": "How do docs affect new engineer ramp-up?",
+    "answer": "They speed ramp-up by reducing onboarding friction.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Shared documentation keeps contributors aligned on architecture and APIs."
+    ],
+    "citations": [
+      {
+        "source_id": "src-28",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-29",
+    "question": "Why are automated tests valuable in CI?",
+    "answer": "They are valuable because they catch regressions quickly and early.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Automated tests catch regressions quickly."
+    ],
+    "citations": [
+      {
+        "source_id": "src-29",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-30",
+    "question": "Why do teams rely on shared docs?",
+    "answer": "Teams rely on shared docs to stay aligned on architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Shared documentation reduces coordination overhead."
+    ],
+    "citations": [
+      {
+        "source_id": "src-30",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-31",
+    "question": "How do tests impact developer confidence?",
+    "answer": "They increase confidence, especially when refactoring.",
+    "contexts": [
+      "A strong test suite increases confidence when refactoring code.",
+      "Confidence improves when regressions are detected early."
+    ],
+    "citations": [
+      {
+        "source_id": "src-31",
+        "snippet": "A strong test suite increases confidence when refactoring code."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-32",
+    "question": "How do docs help avoid misalignment?",
+    "answer": "Docs help avoid misalignment by aligning contributors on architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Misalignment is less likely with shared documentation."
+    ],
+    "citations": [
+      {
+        "source_id": "src-32",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-33",
+    "question": "What does early regression detection enable?",
+    "answer": "It enables quicker fixes and safer changes.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Detecting regressions early helps teams fix issues sooner."
+    ],
+    "citations": [
+      {
+        "source_id": "src-33",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-34",
+    "question": "What is a documentation benefit for collaboration?",
+    "answer": "Documentation improves collaboration by keeping contributors aligned.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Shared understanding improves collaboration."
+    ],
+    "citations": [
+      {
+        "source_id": "src-34",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-35",
+    "question": "Why do tests matter when refactoring?",
+    "answer": "They matter because they increase confidence and catch regressions early.",
+    "contexts": [
+      "A strong test suite increases confidence when refactoring code.",
+      "Automated tests detect regressions early in the development cycle."
+    ],
+    "citations": [
+      {
+        "source_id": "src-35",
+        "snippet": "A strong test suite increases confidence when refactoring code."
+      },
+      {
+        "source_id": "src-36",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-36",
+    "question": "How can docs help reduce repeated questions?",
+    "answer": "Docs reduce repeated questions by reducing onboarding friction and keeping teams aligned.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Shared documentation keeps contributors aligned on architecture and APIs."
+    ],
+    "citations": [
+      {
+        "source_id": "src-37",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      },
+      {
+        "source_id": "src-38",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-37",
+    "question": "What is one reason to automate tests?",
+    "answer": "To detect regressions early in the development cycle.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Automated tests catch regressions quickly."
+    ],
+    "citations": [
+      {
+        "source_id": "src-39",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-38",
+    "question": "How do docs help scaling engineering teams?",
+    "answer": "They help scaling by reducing onboarding friction and aligning contributors.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Shared documentation keeps contributors aligned on architecture and APIs."
+    ],
+    "citations": [
+      {
+        "source_id": "src-40",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      },
+      {
+        "source_id": "src-41",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-39",
+    "question": "What is a primary benefit of a test suite?",
+    "answer": "A test suite increases confidence when refactoring code.",
+    "contexts": [
+      "A strong test suite increases confidence when refactoring code.",
+      "Tests make refactoring safer."
+    ],
+    "citations": [
+      {
+        "source_id": "src-42",
+        "snippet": "A strong test suite increases confidence when refactoring code."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-40",
+    "question": "Why is documenting architecture useful?",
+    "answer": "Documenting architecture is useful because it keeps contributors aligned.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Good docs reduce onboarding friction for new team members."
+    ],
+    "citations": [
+      {
+        "source_id": "src-43",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-41",
+    "question": "How do tests help teams move faster?",
+    "answer": "They help teams move faster by catching regressions early and reducing risk.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "A strong test suite increases confidence when refactoring code."
+    ],
+    "citations": [
+      {
+        "source_id": "src-44",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-42",
+    "question": "How does documentation improve productivity?",
+    "answer": "Documentation improves productivity by reducing onboarding friction and aligning contributors.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Shared documentation keeps contributors aligned on architecture and APIs."
+    ],
+    "citations": [
+      {
+        "source_id": "src-45",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      },
+      {
+        "source_id": "src-46",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-43",
+    "question": "What is a benefit of regression tests?",
+    "answer": "Regression tests detect regressions early in the development cycle.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Detecting regressions early reduces rework."
+    ],
+    "citations": [
+      {
+        "source_id": "src-47",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-44",
+    "question": "Why do good docs reduce ramp-up time?",
+    "answer": "They reduce ramp-up time by reducing onboarding friction for new team members.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Clear documentation aligns teams and reduces onboarding time."
+    ],
+    "citations": [
+      {
+        "source_id": "src-48",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-45",
+    "question": "How do tests help prevent accidental breakages?",
+    "answer": "They help prevent accidental breakages by detecting regressions early.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Tests make changes safer by surfacing unintended breakages quickly."
+    ],
+    "citations": [
+      {
+        "source_id": "src-49",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-46",
+    "question": "How does documentation support consistent decisions?",
+    "answer": "It supports consistency by aligning contributors on architecture and APIs.",
+    "contexts": [
+      "Shared documentation keeps contributors aligned on architecture and APIs.",
+      "Shared understanding supports consistent decisions."
+    ],
+    "citations": [
+      {
+        "source_id": "src-50",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-47",
+    "question": "What is a key advantage of running tests frequently?",
+    "answer": "Running tests frequently catches regressions early and quickly.",
+    "contexts": [
+      "Automated tests detect regressions early in the development cycle.",
+      "Automated tests catch regressions quickly."
+    ],
+    "citations": [
+      {
+        "source_id": "src-51",
+        "snippet": "Automated tests detect regressions early in the development cycle."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-48",
+    "question": "Why are team docs important as a project grows?",
+    "answer": "They are important because they reduce onboarding friction and maintain alignment.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Shared documentation keeps contributors aligned on architecture and APIs."
+    ],
+    "citations": [
+      {
+        "source_id": "src-52",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      },
+      {
+        "source_id": "src-53",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-49",
+    "question": "What does a strong test suite enable for engineers?",
+    "answer": "It enables safer refactoring by increasing confidence.",
+    "contexts": [
+      "A strong test suite increases confidence when refactoring code.",
+      "Tests make refactoring safer."
+    ],
+    "citations": [
+      {
+        "source_id": "src-54",
+        "snippet": "A strong test suite increases confidence when refactoring code."
+      }
+    ]
+  },
+  {
+    "case_id": "smoke-50",
+    "question": "How do clear docs reduce churn?",
+    "answer": "Clear docs reduce churn by reducing onboarding friction and aligning teams.",
+    "contexts": [
+      "Good docs reduce onboarding friction for new team members.",
+      "Shared documentation keeps contributors aligned on architecture and APIs."
+    ],
+    "citations": [
+      {
+        "source_id": "src-55",
+        "snippet": "Good docs reduce onboarding friction for new team members."
+      },
+      {
+        "source_id": "src-56",
+        "snippet": "Shared documentation keeps contributors aligned on architecture and APIs."
+      }
+    ]
   }
 ]

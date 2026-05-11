@@ -9,10 +9,14 @@ services:
       # Override host .env: inside Compose the API must reach the chroma service, not localhost.
       CHROMA_HOST: chroma
       CHROMA_PORT: "8000"
+      # Optional (future): Vertex auth via mounted service account key.
+      # GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/gcp-sa.json
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      # Optional (future): mount a service account JSON into the container.
+      # - ${GCP_SA_KEY_PATH}:/run/secrets/gcp-sa.json:ro
     depends_on:
       - chroma
 

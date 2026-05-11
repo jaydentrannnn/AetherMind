@@ -1,0 +1,16 @@
+[
+  {
+    "case_id": "memory-recall-roundtrip",
+    "topic": "phase memory eval",
+    "preferences": {"style": "concise"},
+    "allow_domains": ["example.org"],
+    "deny_domains": ["blocked.com"]
+  },
+  {
+    "case_id": "memory-empty",
+    "topic": "no prefs",
+    "preferences": {},
+    "allow_domains": [],
+    "deny_domains": []
+  }
+]

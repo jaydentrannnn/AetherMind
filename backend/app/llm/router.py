@@ -29,6 +29,10 @@ TaskTag = Literal[
     "entailment",
     "tool_format",
     "eval_judge",
+    "planner_judge",
+    "researcher_judge",
+    "synth_judge",
+    "critic_judge",
 ]
 
 VALID_TASKS: tuple[str, ...] = get_args(TaskTag)
@@ -76,6 +80,13 @@ _FALLBACK: dict[str, str | None] = {
     "entailment": "critic_final",
     "tool_format": "critic_inner",
     "eval_judge": "critic_final",
+    # Per-stage eval judges fall back to the generic eval_judge model so a
+    # single MODEL_EVAL_JUDGE env is enough for a cheap-live setup. Stages may
+    # override individually via MODEL_<STAGE>_JUDGE for finer cost/quality tuning.
+    "planner_judge": "eval_judge",
+    "researcher_judge": "eval_judge",
+    "synth_judge": "eval_judge",
+    "critic_judge": "eval_judge",
 }
 
 _ENV_KEY: dict[str, str] = {
@@ -88,6 +99,10 @@ _ENV_KEY: dict[str, str] = {
     "entailment": "MODEL_ENTAILMENT",
     "tool_format": "MODEL_TOOL_FORMAT",
     "eval_judge": "MODEL_EVAL_JUDGE",
+    "planner_judge": "MODEL_PLANNER_JUDGE",
+    "researcher_judge": "MODEL_RESEARCHER_JUDGE",
+    "synth_judge": "MODEL_SYNTH_JUDGE",
+    "critic_judge": "MODEL_CRITIC_JUDGE",
 }
 
 

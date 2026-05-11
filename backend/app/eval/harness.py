@@ -1,4 +1,4 @@
-"""Offline eval harness CLI for fixture-based score reports."""
+"""Offline eval harness CLI: legacy fixture mode plus per-node stage mode."""
 
 from __future__ import annotations
 
@@ -10,18 +10,35 @@ from pathlib import Path
 from app.eval.fixtures import default_fixtures_path, load_fixtures
 from app.eval.judge import EvalJudge
 from app.eval.metrics import compute_metrics
-from app.eval.models import EvalCaseResult, EvalRunReport, EvalRunSummary
+from app.eval.models import (
+    EvalCaseResult,
+    EvalRunReport,
+    EvalRunSummary,
+    StageReport,
+)
+from app.eval.stages import STAGE_NAMES, STAGE_REGISTRY
 from app.eval.tracing import build_eval_tracer
+
+_STAGE_CHOICES: tuple[str, ...] = ("legacy", *STAGE_NAMES, "all")
 
 
 def _build_parser() -> argparse.ArgumentParser:
     """Build CLI parser for `python -m app.eval.harness`."""
     parser = argparse.ArgumentParser(description="Run AetherMind offline eval harness")
     parser.add_argument(
+        "--stage",
+        choices=_STAGE_CHOICES,
+        default="legacy",
+        help=(
+            "Which eval to run: 'legacy' for the fixture-based output-only eval, "
+            "a stage name for one node-level eval, or 'all' for every stage."
+        ),
+    )
+    parser.add_argument(
         "--fixtures",
         type=str,
         default=str(default_fixtures_path()),
-        help="Path to eval fixtures JSON file",
+        help="Path to legacy eval fixtures JSON file (only used when --stage=legacy)",
     )
     parser.add_argument("--max-cases", type=int, default=None, help="Optional cap for number of cases")
     parser.add_argument(
@@ -33,7 +50,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--deterministic-only",
         action="store_true",
-        help="Skip LLM judge and compute deterministic metrics only",
+        help="Skip LLM judge calls and compute deterministic metrics only",
+    )
+    parser.add_argument(
+        "--mock-llm",
+        action="store_true",
+        help="Use deterministic router stubs for stages whose nodes call the LLM",
     )
     return parser
 
@@ -51,7 +73,7 @@ async def run_eval(
     max_cases: int | None = None,
     deterministic_only: bool = False,
 ) -> EvalRunReport:
-    """Run the offline eval suite and return a structured report."""
+    """Run the legacy fixture-based eval suite and return a structured report."""
     cases = load_fixtures(fixtures_path, max_cases=max_cases)
     judge = EvalJudge()
     effective_deterministic = deterministic_only or not judge.is_configured()
@@ -102,16 +124,76 @@ async def run_eval(
     return EvalRunReport(summary=summary, results=results)
 
 
+async def run_stage_eval(
+    *,
+    stages: list[str],
+    mock_llm: bool = False,
+    deterministic_only: bool = False,
+) -> EvalRunReport:
+    """Run one or more per-node stage evals and return an aggregated report.
+
+    Args:
+        stages: Stage names to run (each must be a key of ``STAGE_REGISTRY``).
+        mock_llm: When True, stages use deterministic router stubs in place of
+            their LLM call (where applicable).
+        deterministic_only: When True, stages skip their LLM-as-judge step.
+    """
+    if not stages:
+        raise ValueError("run_stage_eval requires at least one stage name")
+    unknown = [s for s in stages if s not in STAGE_REGISTRY]
+    if unknown:
+        raise ValueError(f"unknown stages: {unknown}; valid choices: {STAGE_NAMES}")
+
+    stage_reports: dict[str, StageReport] = {}
+    for stage in stages:
+        runner = STAGE_REGISTRY[stage]
+        stage_reports[stage] = await runner(
+            mock_llm=mock_llm,
+            deterministic_only=deterministic_only,
+        )
+
+    total_cases = sum(report.summary.total_cases for report in stage_reports.values())
+    judge_scores = [
+        report.summary.avg_judge_score
+        for report in stage_reports.values()
+        if report.summary.avg_judge_score is not None
+    ]
+    avg_judge_score = round(sum(judge_scores) / len(judge_scores), 4) if judge_scores else None
+
+    summary = EvalRunSummary(
+        total_cases=total_cases,
+        deterministic_only=deterministic_only or mock_llm,
+        fixtures_path="per-node",
+        avg_judge_score=avg_judge_score,
+        stages={name: report.summary for name, report in stage_reports.items()},
+    )
+    return EvalRunReport(summary=summary, results=[], stages=stage_reports)
+
+
+def _resolve_stages(stage_arg: str) -> list[str]:
+    """Convert the --stage CLI value into the explicit list of stage names."""
+    if stage_arg == "all":
+        return list(STAGE_NAMES)
+    return [stage_arg]
+
+
 async def _async_main() -> int:
     """Run CLI entrypoint and print/write JSON report."""
     args = _build_parser().parse_args()
-    report = await run_eval(
-        fixtures_path=args.fixtures,
-        max_cases=args.max_cases,
-        deterministic_only=args.deterministic_only,
-    )
+    if args.stage == "legacy":
+        report = await run_eval(
+            fixtures_path=args.fixtures,
+            max_cases=args.max_cases,
+            deterministic_only=args.deterministic_only,
+        )
+    else:
+        report = await run_stage_eval(
+            stages=_resolve_stages(args.stage),
+            mock_llm=args.mock_llm,
+            deterministic_only=args.deterministic_only,
+        )
     payload = report.model_dump()
-    rendered = json.dumps(payload, indent=2)
+    rendered = json.dumps(payload, indent=2, default=str)
     if args.output_json:
         output_path = Path(args.output_json)
         output_path.parent.mkdir(parents=True, exist_ok=True)

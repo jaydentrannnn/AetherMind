@@ -1,0 +1,71 @@
+[
+  {
+    "case_id": "critic-approve-final",
+    "topic": "Test topic",
+    "depth": "quick",
+    "revisions": 0,
+    "draft": {
+      "title": "Adequate report on testing",
+      "summary": "Tests are good.",
+      "markdown": "Automated tests detect regressions early in the development cycle and improve refactoring safety. They form the backbone of CI pipelines and reduce manual QA workload. Teams that invest in tests can ship changes faster with fewer rollbacks. Regression suites should run on every pull request to keep mainline green. Mature teams also track coverage trends over time to detect quality drift. End-to-end tests complement fast unit tests by guarding cross-service contracts. Investing in test fixtures and factories reduces flakiness over time and keeps signal high for engineers.",
+      "sections": [
+        {"title": "Why tests", "content": "Tests catch regressions early and let engineers refactor safely. Regression suites form the foundation of CI pipelines and gate every pull request before merge."},
+        {"title": "Trade-offs", "content": "Maintaining a test suite costs engineering time but reduces production incidents and on-call burden."},
+        {"title": "Best practices", "content": "Run tests on every pull request and track coverage trends quarterly."}
+      ]
+    },
+    "guardrail_report": {"unverified_claims": [], "closure_violations": [], "policy_violations": []},
+    "mock_critique": {
+      "score": 4.5,
+      "approved": true,
+      "directives": []
+    },
+    "expected": {"next_action": "memory_writer"}
+  },
+  {
+    "case_id": "critic-revise-synthesizer",
+    "topic": "Test topic",
+    "depth": "quick",
+    "revisions": 0,
+    "draft": {
+      "title": "Adequate report on testing",
+      "summary": "Tests are good.",
+      "markdown": "Automated tests detect regressions early in the development cycle and improve refactoring safety. They form the backbone of CI pipelines and reduce manual QA workload. Teams that invest in tests can ship changes faster with fewer rollbacks. Regression suites should run on every pull request to keep mainline green. Mature teams also track coverage trends over time to detect quality drift. End-to-end tests complement fast unit tests by guarding cross-service contracts. Investing in test fixtures and factories reduces flakiness over time and keeps signal high for engineers.",
+      "sections": [
+        {"title": "Why tests", "content": "Tests catch regressions early. Regression suites form the foundation of CI pipelines and gate every pull request."},
+        {"title": "Trade-offs", "content": "Test suites cost engineering time but reduce incidents and on-call burden."},
+        {"title": "Best practices", "content": "Track coverage trends and run on every PR."}
+      ]
+    },
+    "guardrail_report": {"unverified_claims": [], "closure_violations": [], "policy_violations": []},
+    "mock_critique": {
+      "score": 3.0,
+      "approved": false,
+      "directives": ["clarify the trade-offs section"]
+    },
+    "expected": {"next_action": "synthesizer"}
+  },
+  {
+    "case_id": "critic-evidence-gap-routes-researcher",
+    "topic": "Test topic",
+    "depth": "quick",
+    "revisions": 0,
+    "draft": {
+      "title": "Adequate report on testing",
+      "summary": "Tests are good.",
+      "markdown": "Automated tests detect regressions early in the development cycle and improve refactoring safety. They form the backbone of CI pipelines and reduce manual QA workload. Teams that invest in tests can ship changes faster with fewer rollbacks. Regression suites should run on every pull request to keep mainline green. Mature teams also track coverage trends over time to detect quality drift. End-to-end tests complement fast unit tests by guarding cross-service contracts. Investing in test fixtures and factories reduces flakiness over time and keeps signal high for engineers.",
+      "sections": [
+        {"title": "Why tests", "content": "Tests catch regressions early. Regression suites form the foundation of CI pipelines and gate every pull request."},
+        {"title": "Trade-offs", "content": "Test suites cost engineering time but reduce incidents and on-call burden."},
+        {"title": "Best practices", "content": "Track coverage trends and run on every PR."}
+      ]
+    },
+    "guardrail_report": {"unverified_claims": [], "closure_violations": [], "policy_violations": []},
+    "mock_critique": {
+      "score": 2.5,
+      "approved": false,
+      "directives": ["missing evidence: gather more sources on test maintainability"]
+    },
+    "expected": {"next_action": "researcher"}
+  }
+]

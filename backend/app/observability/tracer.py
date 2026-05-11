@@ -41,7 +41,13 @@ class LangfuseAetherTracer(AetherTracer):
         self._client: Any | None = None
 
     def _get_client(self) -> Any | None:
-        """Instantiate and memoize the Langfuse client if available/configured."""
+        """Instantiate and memoize the Langfuse client if available/configured.
+
+        This repo treats Langfuse as optional. Some environments (or older SDK
+        versions) may import successfully but not expose the methods we use. In
+        that case, we silently disable tracing rather than crashing the job
+        runtime (which would also break SSE streaming).
+        """
         if self._client is not None:
             return self._client
         if not settings.LANGFUSE_PUBLIC_KEY or not settings.LANGFUSE_SECRET_KEY:
@@ -50,11 +56,17 @@ class LangfuseAetherTracer(AetherTracer):
             from langfuse import Langfuse  # type: ignore[import-not-found]
         except Exception:
             return None
-        self._client = Langfuse(
-            public_key=settings.LANGFUSE_PUBLIC_KEY,
-            secret_key=settings.LANGFUSE_SECRET_KEY,
-            host=settings.LANGFUSE_HOST or "https://cloud.langfuse.com",
-        )
+        try:
+            client = Langfuse(
+                public_key=settings.LANGFUSE_PUBLIC_KEY,
+                secret_key=settings.LANGFUSE_SECRET_KEY,
+                host=settings.LANGFUSE_HOST or "https://cloud.langfuse.com",
+            )
+        except Exception:
+            return None
+        if not hasattr(client, "trace") or not hasattr(client, "span"):
+            return None
+        self._client = client
         return self._client
 
     def start_trace(self, *, job_id: str, topic: str) -> str | None:
@@ -62,11 +74,14 @@ class LangfuseAetherTracer(AetherTracer):
         client = self._get_client()
         if client is None:
             return None
-        trace = client.trace(
-            name="aethermind_job",
-            input={"topic": topic},
-            metadata={"job_id": job_id},
-        )
+        try:
+            trace = client.trace(
+                name="aethermind_job",
+                input={"topic": topic},
+                metadata={"job_id": job_id},
+            )
+        except Exception:
+            return None
         return getattr(trace, "id", None)
 
     def span(self, trace_id: str | None, *, name: str, input: Any = None) -> dict[str, Any]:
@@ -74,7 +89,10 @@ class LangfuseAetherTracer(AetherTracer):
         client = self._get_client()
         if client is None or trace_id is None:
             return {}
-        s = client.span(trace_id=trace_id, name=name, input=input)
+        try:
+            s = client.span(trace_id=trace_id, name=name, input=input)
+        except Exception:
+            return {}
         return {"span": s, "trace_id": trace_id}
 
     def end_span(self, span: dict[str, Any], *, output: Any = None, error: str | None = None) -> None:
@@ -93,11 +111,14 @@ class LangfuseAetherTracer(AetherTracer):
         client = self._get_client()
         if client is None or trace_id is None:
             return
-        client.trace(
-            id=trace_id,
-            output=output,
-            metadata={"error": error} if error else {},
-        )
+        try:
+            client.trace(
+                id=trace_id,
+                output=output,
+                metadata={"error": error} if error else {},
+            )
+        except Exception:
+            return
 
     def flush(self) -> None:
         """Flush all buffered Langfuse events."""

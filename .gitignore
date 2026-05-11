@@ -29,3 +29,6 @@ Thumbs.db
 
 #Debug
 debug-be98c3.log
+
+#Eval reports
+backend/eval-report.json
